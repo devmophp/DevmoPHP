@@ -167,3 +167,16 @@ class DevmoBox {
 
 abstract class Dao {
 }
+
+
+function __autoload ($class) {
+	if (DevmoCore::$debug)
+		Logger::add("Auto Loading {$class}");
+	if (substr($class,-10)=='Controller') {
+		Devmo::getController(substr($class,0,-10),true);
+	} else if (substr($class,-3)=='Dao') {
+		Devmo::getDao(substr($class,0,-3),true);
+	} else {
+		Devmo::getLibrary($class,'load');
+	}
+}
