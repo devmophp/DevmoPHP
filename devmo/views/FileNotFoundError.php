@@ -1,1 +1,1 @@
-Missing File: <?php echo $this->getToken('file') ?>
+Missing File: <?php echo $this->file ?>

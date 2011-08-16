@@ -86,7 +86,7 @@ class DatabaseDao extends Dao {
 			$this->connect();
 		$dbh = DatabaseBox::getDbh($this->dbk);
 		if (!$result = $dbh->query($sql))
-			throw new Exception('Error Querying Database: '.$dbh->errno.':'.$dbh->error.":\n".preg_replace('=\s+=',' ',$sql));
+			throw new DevmoException('Error Querying Database: '.$dbh->errno.':'.$dbh->error.":\n".preg_replace('=\s+=',' ',$sql));
 		if ($result instanceof mysqli_result)
 			return new ResultSetDatabaseDao($result);
 		if ($returnNewId)
@@ -194,7 +194,7 @@ class ResultSetDatabaseDao implements Iterator, Countable {
 
 	public function __construct ($result) {
 		if (!($result instanceof mysqli_result))
-			throw new InvalidError('DB Query Resource',$dbResource);
+			throw new InvalidDevmoException('DB Query Resource',$dbResource);
 		$this->result = $result;
 		$this->position = 0;
 	}

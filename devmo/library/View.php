@@ -8,11 +8,9 @@
  * @copyright Copyright (c) 2007 Devmo
  * @version 1.0
  */
-class View {
-	private $built;
+class View extends DevmoBox {
 	private $parent;	//	ref to parent view object
 	private $template;	//	str	template file
-	private $tokens;	//	arr	variable names and values
 
 
 	/**
@@ -22,13 +20,18 @@ class View {
 	 * @return self
 	 */
 	public function __construct () {
-		$this->built = false;
 		$this->parent = null;
 		$this->template = null;
-		$this->tokens = array();
 	}
 
 
+  public function __set ($name, $value) {
+		if ($value===$this)
+			throw new DevmoException('Token Value Is Circular Reference');
+  	parent::__set($name,$value);
+		if (is_object($value) && $value instanceof View)
+			$value->parent = $this;
+  }
 
 
 	/**
@@ -109,43 +112,7 @@ class View {
 	 * @return void
 	 */
 	public function setToken ($name, $value) {
-		//	error checks
-		if (!$name) 
-			throw new Error('Token Name Missing');
-		if ($value===$this)
-			throw new Error('Token Value Is Circular Reference');
-		//	set parent
-		if (is_object($value) && $value instanceof View)
-			$value->parent = $this;
-		//	finally do it!
-		$this->tokens[$name] = $value;
-	}
-
-
-
-
-
-	/**
-	 * Adds value to array token.
-	 * This is primarily used to add to views tokens 
-	 * created by another controller
-	 *
-	 * @param token name, token value
-	 * @return void
-	 */
-	public function addToken ($name, $keyOrValue, $hashValue=null) {
-		//	error checks
-		if (!$name) 
-			throw new Error('Token Name Missing');
-		if ($keyOrValue==$this)
-			throw new Error('Token Value Is Circular Reference');
-		if (!is_array(Util::getValue($name,$this->tokens)))
-			throw new Error('Token Value Is Not An Array');
-	// set data
-	if ($keyOrValue && $hashValue)
-		$this->tokens[$name][$keyOrValue] = $hashValue;
-	else 
-		$this->tokens[$name][] = $keyOrValue;
+		$this->__set($name,$value);
 	}
 
 
@@ -159,11 +126,7 @@ class View {
 	 * @return token value
 	 */
 	public function getToken ($name) {
-		//	error checks
-		if (!$name) 
-			throw new Error('Token Name Missing');
-		//	return value if not setting
-		return Util::getValue($name,$this->tokens);
+		return $this->__get($name);
 	}
 
 
@@ -177,7 +140,11 @@ class View {
 	 * @return void
 	 */
 	public function setTokens ($tokens) {
-		$this->tokens = is_array($tokens) ? $tokens : array();
+		if (is_array($tokens) || is_object($tokens)) {
+			foreach ($tokens as $k=>$v) {
+				$this->__set($k,$v);
+			}
+		}
 	}
 
 
@@ -190,7 +157,7 @@ class View {
 	 * @return associative array of tokens
 	 */
 	public function getTokens () {
-		return $this->tokens;
+		return $this->data;
 	}
 
 } //	EOC

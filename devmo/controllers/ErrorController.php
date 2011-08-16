@@ -11,12 +11,16 @@ class ErrorController extends Controller {
 	public $template;
 
   public function run () {
-    //  build wrapper
-    $error = $this->getView("/{$this->template}Error",$this->getData());
+		// log it
+    $message = "Error:";
+		foreach ($this->getData() as $k=>$v)
+			$message .= " {$k}:{$v}";
+    Logger::add($message);
+    // build wrapper
+    $error = $this->getView("{$this->template}Error",$this->getData());
     $view = $this->getView('/Error',array('body'=>$error));
-    $wrap = $this->runController('/Default',array('body'=>$view));
+    $wrap = $this->runController('/SiteWrapper',array('body'=>$view));
     return $wrap;
   }
-  
+
 }
-?>

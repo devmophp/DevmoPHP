@@ -10,8 +10,8 @@
 class FourOFourController extends Controller {
 
   public function run () {
-    $view = Factory::getView('DefaultWrapper');
-    $view->setToken('body',Factory::getView('/FourOFour'));
+    $view = $this->getView('/SiteWrapper');
+    $view->body = $this->getView();
     return $view;
   }
   

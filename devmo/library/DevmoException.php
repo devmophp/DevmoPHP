@@ -1,18 +1,7 @@
 <?php
-/**
- * Defualt Framework exception class.  A new Error should
- * always be thrown instead of a new Exception
- *
- * @category Framework
- * @author Dan Wager
- * @copyright Copyright (c) 2007 Devmo
- * @version 1.0
- */
-class Error extends Exception {
+class DevmoException extends LogicException {
   private $path;
   private $info;
-
-
 
 
   public function __construct ($text, $path=null) {
@@ -20,27 +9,18 @@ class Error extends Exception {
     $this->extra = null;
     parent::__construct($text);
   }
-  
-  
 
-  
+
   public function getPath () {
     return $this->path;
   }
+
   
   public function setInfo ($info) {
     $this->info = $info;
   }
 
-  
-  
 
-  /**
-   * overwritten method to format error messages
-   *
-   * @param
-   * @return
-   */
   public function __toString () {
     $err = "\nWhat: ".$this->getMessage()
          .($this->info ? "\nInfo: {$this->info}" : null)
@@ -64,28 +44,16 @@ class Error extends Exception {
 }
 
 
-
-
-/**
- * Defualt Framework exception class.  A new Error should
- * always be thrown instead of a new Exception
- *
- * @category Framework
- * @author Dan Wager
- * @copyright Copyright (c) 2007 Devmo
- * @version 1.0
- */
-class CoreError extends Error {
+class DevmoCoreException extends DevmoException {
   public $controller;
   public $tokens;
-
 
 
   public function __construct ($controller=null,$tokens=null) {
     $this->controller = $controller;
     $this->tokens = $tokens ? $tokens : array();
     $this->tokens['controller'] = $controller;
-    parent::__construct("CoreError:{$controller}");
+    parent::__construct("DevmoCoreException:{$controller}");
   }
   
 
@@ -102,11 +70,11 @@ class CoreError extends Error {
 
 
 
-class UniqueError extends Error {
+class UniqueDevmoException extends DevmoException {
 }
 
 
-class InvalidError extends Error {
+class InvalidDevmoException extends DevmoException {
   public function __construct ($what,$value) {
     parent::__construct(($value ? "Invalid Value Found For {$what}" : "Missing Value For {$what}"));
   }

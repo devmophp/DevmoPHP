@@ -8,14 +8,18 @@
  * @category Utility
  * @version 1.0
  */
-class Log {
+class Logger {
   private static $_self;
   private static $dir;
-  private static $mbs = 5;
-  private static $num = 5;
+  private static $mbs = 2044;
+  private static $num = 2;
 	private static $roll = false;
+	private static $file = null;
  
  
+  public static function setDefaultFile ($file) {
+    self::$file = $file;
+  }
 
 
   /**
@@ -24,11 +28,10 @@ class Log {
    * @param log file name, log message
    * @return void
    */
-  public static function add ($file, $text) {
+  public static function add ($text, $file=null) {
     // error checking
-    if (!$file) 
-    	return FALSE;
-    $file = DEVMO_LOG_DIR.'/'.$file.'.log';
+    if (!$file)
+			$file = self::$file;
     // roll file
     $success = self::$roll ? self::roll($file) : true;
     // write message to log

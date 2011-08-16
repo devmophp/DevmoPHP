@@ -63,7 +63,7 @@
   <body>
     <div class="wrap">
       <div class="body">
-        <?php echo $this->getToken('body') ?>
+        <?php echo $this->body ?>
       </div>
       <div class="poweredby">
         <span class="poweredbyText">powered by</span>
