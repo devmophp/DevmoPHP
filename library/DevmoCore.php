@@ -11,11 +11,12 @@ class DevmoCore {
   	// find controller
   	if ($name) {
   		$controller = $name;
-		} else if (self::$requestedController) {
-			$controller = self::$requestedController;
-		} else {
-			$controller = self::$homeController;
-		}
+	} else if (self::$requestedController) {
+		$controller = self::$requestedController;
+	}
+	if (!$controller || $controller === '/') {
+		$controller = self::$homeController;
+	}
   	//	get controller view
     if (!$view = self::executeController($controller,$data))
 	    throw new DevmoCoreException('ViewNotFound',array('controller'=>'?'));
