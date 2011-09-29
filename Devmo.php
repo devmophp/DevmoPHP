@@ -120,6 +120,15 @@ class Devmo {
   public static function getServer ($name) {
     return self::getValue($name,$_SERVER);
   }
+  
+  /**
+   * Returns the current debug setting
+   * 
+   * @return bool Whether debug is on or off
+   */
+  public static function isDebug() {
+  	return DevmoCore::$debug;
+  }
 
 
   public static function getController ($controller, $loadOnly=false) {
