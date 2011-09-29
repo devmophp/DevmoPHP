@@ -167,7 +167,7 @@ class Devmo {
 
   public static function getLibrary ($class, $option='auto') {
     return DevmoCore::getObject(
-    	DevmoCore::getFile('library',$class),
+    	DevmoCore::getFile('libraries',$class),
     	null,
     	$option);
   }
