@@ -9,9 +9,7 @@ class DevmoCore {
 
   public static function execute ($name=false,$data=null) {
   	// find controller
-  	if ($name) {
-  		$controller = $name;
-	} else if (self::$requestedController) {
+  	if (!($controller = $name) && self::$requestedController) {
 		$controller = self::$requestedController;
 	}
 	if (!$controller || $controller === '/') {
