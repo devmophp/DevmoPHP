@@ -61,9 +61,19 @@ class DevmoCore {
 
 	public static function getFile ($type, $name) {
 		preg_match('/^[\/]*(.*?)([^\/]+)$/',$name,$matches);
+		// find context
+		if (empty($matches[1])) {
+			$context = '/';
+		} else if (strpos($matches[1],'modules/')!==false) {
+			$context = '/'.$matches[1];
+		} else {
+			$context = str_replace('/','/modules/',substr('/'.$matches[1],0,-1)).'/';
+		}
+		// format name
 		$name = preg_replace('/[ _-]+/','',ucwords($matches[2]));
-		$context = "/{$matches[1]}";
+		// put it together
 		$subPath = $context.self::$folders[$type].'/'.$name.'.php';
+		// find it
 		$file = null;
   	foreach (self::$paths[$type] as $path) {
   		$file = $path.$subPath;
