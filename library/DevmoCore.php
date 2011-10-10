@@ -2,7 +2,7 @@
 class DevmoCore {
 	public static $debug = false;
 	public static $paths = array('controllers'=>array(),'views'=>array(),'libraries'=>array(),'daos'=>array());
-	public static $folders = array('controllers'=>'controllers','views'=>'views','libraries'=>'libraries','daos'=>'daos');
+	public static $folders = array('controllers'=>'controllers','views'=>'views','libraries'=>'libraries','daos'=>'daos','modules'=>'modules');
 	public static $mappings = array();
 	public static $homeController = null;
 	public static $requestedController = null;
@@ -64,10 +64,10 @@ class DevmoCore {
 		// find context
 		if (empty($matches[1])) {
 			$context = '/';
-		} else if (strpos($matches[1],'modules/')!==false) {
+		} else if (strpos($matches[1],self::$folders['modules'].'/')!==false) {
 			$context = '/'.$matches[1];
 		} else {
-			$context = str_replace('/','/modules/',substr('/'.$matches[1],0,-1)).'/';
+			$context = str_replace('/','/'.self::$folders['modules'].'/',substr('/'.$matches[1],0,-1)).'/';
 		}
 		// format name
 		$name = preg_replace('/[ _-]+/','',ucwords($matches[2]));
@@ -137,10 +137,10 @@ class DevmoCore {
 
 	public static function handleException (Exception $e) {
 		self::$debug
-			? debug($e->__toString(),'log entry')
-			: debug($e->getMessage(),'See the error log for more details');
+			? Devmo::debug($e->__toString(),'log entry')
+			: Devmo::debug($e->getMessage(),'See the error log for more details');
 		if (!Logger::add($e->__toString()))
-			debug(null,'Could not log error');
+			Devmo::debug(null,'Could not log error');
 	}
 
 
@@ -155,20 +155,16 @@ class DevmoCore {
 
 
 class DevmoBox {
-	private $boxData;
-
-	public function __construct () {
-		$this->boxData = array();
-	}
+	private $devmoBoxData = array();
 
   public function __set ($name, $value) {
 		if (empty($name)) 
 			throw new InvalidDevmoException('Data Key',$name);
-		return $this->boxData[$name] = $value;
+		$this->devmoBoxData[$name] = $value;
   }
 
   public function __get ($name) {
-  	return Devmo::getValue($name,$this->boxData);
+  	return Devmo::getValue($name,$this->devmoBoxData);
   }
 
 }

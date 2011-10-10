@@ -85,7 +85,7 @@ class Devmo {
 	}
 
 
-  public static function getValue ($name, $mixed) {
+  public static function getValue ($name, &$mixed=null) {
   	if (is_array($mixed))
 			return isset($mixed[$name])
 	      ? $mixed[$name]
@@ -172,40 +172,33 @@ class Devmo {
     	$option);
   }
 
+
+	public static function debug ($obj, $text='DEBUG', $opt=FALSE) {
+	  echo "<pre>\n";
+	  echo "{$text}\n";
+	  switch ($opt) {
+	    default:
+				print_r($obj);
+				break;
+	    case 'fatal':
+				print_r($obj);
+				exit;
+				break;
+	    case 'trace':
+				debug_print_backtrace();
+				print_r($obj);
+				break;
+	    case 'obj':
+				print_r($obj);
+				break;
+	    case 'xml':
+				echo $obj->asXML();
+				break;
+	  }
+	  echo "\n</pre>";
+	}
+
 }
-
-
-/**
- * Global convenient method used for debuging by outputting text
- *
- * @param Object, header text, option (fatal, trace, obj, xml)
- * @return void
- */
-function debug ($obj, $text='DEBUG', $opt=FALSE) {
-  echo "<pre>\n";
-  echo "{$text}\n";
-  switch ($opt) {
-    default:
-			print_r($obj);
-			break;
-    case 'fatal':
-			print_r($obj);
-			exit;
-			break;
-    case 'trace':
-			debug_print_backtrace();
-			print_r($obj);
-			break;
-    case 'obj':
-			print_r($obj);
-			break;
-    case 'xml':
-			echo $obj->asXML();
-			break;
-  }
-  echo "\n</pre>";
-}
-
 
 // check for magic quotes
 if (get_magic_quotes_gpc())
