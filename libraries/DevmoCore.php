@@ -2,7 +2,7 @@
 class DevmoCore {
 	public static $debug = false;
 	public static $paths = array('controllers'=>array(),'views'=>array(),'libraries'=>array(),'daos'=>array());
-	public static $folders = array('controllers'=>'controllers','views'=>'views','libraries'=>'libraries','daos'=>'daos','modules'=>'modules');
+	public static $folders = array('controllers'=>'controllers','views'=>'views','libraries'=>'library','daos'=>'daos','modules'=>'modules');
 	public static $mappings = array();
 	public static $homeController = null;
 	public static $requestedController = null;
@@ -135,6 +135,14 @@ class DevmoCore {
 	}
 
 
+  public static function sanitize (&$hash) {
+    foreach ($hash as $k=>$v)
+      is_array($v)
+        ? self::sanitize($v)
+        : $hash[$k] = htmlentities(trim($v),ENT_NOQUOTES);
+  }
+
+
 	public static function handleException (Exception $e) {
 		self::$debug
 			? Devmo::debug($e->__toString(),'log entry')
@@ -143,13 +151,16 @@ class DevmoCore {
 			Devmo::debug(null,'Could not log error');
 	}
 
-
-  public static function sanitize (&$hash) {
-    foreach ($hash as $k=>$v)
-      is_array($v)
-        ? self::sanitize($v)
-        : $hash[$k] = htmlentities(trim($v),ENT_NOQUOTES);
-  }
+	public static function loadClass ($class) {
+		//Devmo::debug($class,'autoloading class');
+		if (substr($class,-10)=='Controller') {
+			Devmo::getController(substr($class,0,-10),true);
+		} else if (substr($class,-3)=='Dao') {
+			Devmo::getDao(substr($class,0,-3),true);
+		} else {
+			Devmo::getLibrary($class,'load');
+		}
+	}
 
 }
 
@@ -173,15 +184,18 @@ class DevmoBox {
 abstract class Dao {
 }
 
-
-function __autoload ($class) {
-	if (DevmoCore::$debug)
-		Logger::add("Auto Loading {$class}");
-	if (substr($class,-10)=='Controller') {
-		Devmo::getController(substr($class,0,-10),true);
-	} else if (substr($class,-3)=='Dao') {
-		Devmo::getDao(substr($class,0,-3),true);
-	} else {
-		Devmo::getLibrary($class,'load');
-	}
-}
+// check for magic quotes
+if (get_magic_quotes_gpc())
+  die("Magic Quotes Config is On... exiting.");
+// path checks
+if (!defined('DEVMO_DIR'))
+	throw new Exception('Missing Constant DEVMO_DIR');
+if (!is_dir(DEVMO_DIR))
+	throw new Exception('Invalid DEVMO_DIR ['.DEVMO_DIR.']');
+// set default exception handler
+set_exception_handler(array('DevmoCore','handleException'));
+spl_autoload_register(array('DevmoCore','loadClass'));
+// sanitize data
+DevmoCore::sanitize($_GET);
+DevmoCore::sanitize($_POST);
+DevmoCore::sanitize($_REQUEST);

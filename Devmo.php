@@ -200,28 +200,10 @@ class Devmo {
 
 }
 
-// check for magic quotes
-if (get_magic_quotes_gpc())
-  die("Magic Quotes Config is On.  Website now Exiting.");
-// path checks
-if (!defined('DEVMO_DIR'))
-	throw new Exception('Missing Constant DEVMO_DIR');
-if (!is_dir(DEVMO_DIR))
-	throw new Exception('Invalid DEVMO_DIR ['.DEVMO_DIR.']');
 // require core classes
-require(DEVMO_DIR."/library/DevmoCore.php");
-require(DEVMO_DIR."/library/DevmoException.php");
-require(DEVMO_DIR."/library/Logger.php");
-require(DEVMO_DIR."/library/View.php");
-require(DEVMO_DIR."/library/Loader.php");
-require(DEVMO_DIR."/controllers/Controller.php");
-require(DEVMO_DIR."/library/Deprecated.php");
-// set default exception handler
-set_exception_handler(array('DevmoCore','handleException'));
-// sanitize data
-DevmoCore::sanitize($_GET);
-DevmoCore::sanitize($_POST);
-DevmoCore::sanitize($_REQUEST);
+require(DEVMO_DIR."/libraries/DevmoException.php");
+require(DEVMO_DIR."/libraries/DevmoCore.php");
+require(DEVMO_DIR."/libraries/Deprecated.php");
 // set defaults
 Devmo::setDebug(false);
 Devmo::setLog('../log/'.strtolower(Devmo::getServer('HTTP_HOST')).'.log');
