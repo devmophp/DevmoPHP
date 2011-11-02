@@ -26,6 +26,7 @@ abstract class TransactionDao extends DatabaseDao {
 				$this->commit();
 			} catch (Exception $e) {
 				$this->rollback();
+				throw $e;
 			}
 		}
 		return $result;
