@@ -8,7 +8,9 @@
  * @copyright Copyright (c) 2007 Devmo
  * @version 1.0
  */
-class View extends DevmoBox {
+namespace Devmo;
+
+class View extends \Devmo\Box {
 	private $parent;	//	ref to parent view object
 	private $template;	//	str	template file
 
@@ -161,4 +163,3 @@ class View extends DevmoBox {
 	}
 
 } //	EOC
-?>

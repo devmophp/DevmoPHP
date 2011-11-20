@@ -1,23 +1,27 @@
 <?php
-class DevmoCore {
+namespace Devmo;
+
+class Core {
 	public static $debug = false;
 	public static $paths = array('controllers'=>array(),'views'=>array(),'libraries'=>array(),'daos'=>array());
-	public static $folders = array('controllers'=>'controllers','views'=>'views','libraries'=>'library','daos'=>'daos','modules'=>'modules');
+	public static $folders = array('controllers'=>'_controllers','views'=>'_views','libraries'=>'_libraries');
 	public static $mappings = array();
 	public static $homeController = null;
 	public static $requestedController = null;
+	public static $namespace = null;
+
 
   public static function execute ($name=false,$data=null) {
   	// find controller
   	if (!($controller = $name) && self::$requestedController) {
-		$controller = self::$requestedController;
-	}
-	if (!$controller || $controller === '/') {
-		$controller = self::$homeController;
-	}
+			$controller = self::$requestedController;
+		}
+		if (!$controller || $controller === '/') {
+			$controller = self::$homeController;
+		}
   	//	get controller view
     if (!$view = self::executeController($controller,$data))
-	    throw new DevmoCoreException('ViewNotFound',array('controller'=>'?'));
+	    throw new \Devmo\CoreException('ViewNotFound',array('controller'=>'?'));
     return $view;
   }
 
@@ -33,7 +37,7 @@ class DevmoCore {
 			}
 		}
     //  get controller object
-		$controller = Devmo::getController($path);
+		$controller = \Devmo::getController($path);
 		if ($data)
 			$controller->setData($data);
 		if ($message)
@@ -60,14 +64,13 @@ class DevmoCore {
 
 
 	public static function getFile ($type, $name) {
+		$ogname = $name;
 		preg_match('/^[\/]*(.*?)([^\/]+)$/',$name,$matches);
 		// find context
 		if (empty($matches[1])) {
 			$context = '/';
-		} else if (strpos($matches[1],self::$folders['modules'].'/')!==false) {
-			$context = '/'.$matches[1];
 		} else {
-			$context = str_replace('/','/'.self::$folders['modules'].'/',substr('/'.$matches[1],0,-1)).'/';
+			$context = substr('/'.$matches[1],0,-1).'/';
 		}
 		// format name
 		$name = preg_replace('/[ _-]+/','',ucwords($matches[2]));
@@ -82,24 +85,28 @@ class DevmoCore {
 			}
   	}
     //  check framwork core
+    $devmoFile = null;
     if (!is_file($file)) {
     	$devmoFile = DEVMO_DIR.'/'.$type.'/'.$name.'.php';
-    	if (is_file($devmoFile))
+			//\Devmo::debug($devmoFile,'Core::getFile('.$type.','.$ogname.')');
+    	if (is_file($devmoFile)) {
 		    $file = $devmoFile;
+			} else { 
+				\Devmo::debug($file,'Core::getFile('.$type.','.$ogname.')','trace');
+	      throw new \Devmo\CoreException('/FileNotFound',array('file'=>$file));
+			}
     }
-    //  handle file not found
-    if (!is_file($file))
-      throw new DevmoCoreException('/FileNotFound',array('file'=>$file));
 		// return file box
-		$box = new DevmoBox;
-		$box->class = $name;
+		$box = new \Devmo\Box;
+		$box->class = ($devmoFile ? '\Devmo\\'.$name : str_replace('/','\\',self::$namespace.$context.$type.'/'.$name));
 		$box->file = $file;
 		$box->context = $context;
+		// \Devmo::debug($box,'Core::getFile('.$type.','.$ogname.')');
 		return $box;
 	} 
 	
 
-	public static function getObject (DevmoBox $file, $parentClass=null, $option='auto') {
+	public static function getObject (\Devmo\Box $file, $parentClass=null, $option='auto') {
 		require_once($file->file);
 		if ($option=='load')
 			return true;
@@ -107,10 +114,10 @@ class DevmoCore {
     $class = $file->class;
 		// load file
     if (!class_exists($class))
-      throw new DevmoCoreException('ClassNotFound',array('class'=>$class,'file'=>$file->getFile()));
+      throw new \Devmo\CoreException('ClassNotFound',array('class'=>$class,'file'=>$file->file));
     //  check for parent class
     if ($parentClass && !class_exists($parentClass))
-      throw new DevmoCoreException('ClassNotFound',array('class'=>$parentClass,'file'=>$file->getFile()));
+      throw new \Devmo\CoreException('ClassNotFound',array('class'=>$parentClass,'file'=>$file->getFile()));
     //  handle options
     $obj = null;
     switch ($option) {
@@ -128,7 +135,7 @@ class DevmoCore {
         break;
     }
 		if ($parentClass && !($obj instanceof $parentClass))
-      throw new DevmoCoreException('ClassNotController',array('class'=>$file->getClass(),'file'=>$file->getFile()));
+      throw new \Devmo\CoreException('ClassNotController',array('class'=>$file->getClass(),'file'=>$file->getFile()));
     if (($obj instanceof Loader) && !$obj->getContext())
     	$obj->setContext($file->context);
     return $obj;
@@ -145,37 +152,39 @@ class DevmoCore {
 
 	public static function handleException (Exception $e) {
 		self::$debug
-			? Devmo::debug($e->__toString(),'log entry')
-			: Devmo::debug($e->getMessage(),'See the error log for more details');
+			? \Devmo::debug($e->__toString(),'log entry')
+			: \Devmo::debug($e->getMessage(),'See the error log for more details');
 		if (!Logger::add($e->__toString()))
-			Devmo::debug(null,'Could not log error');
+			\Devmo::debug(null,'Could not log error');
 	}
 
 	public static function loadClass ($class) {
-		//Devmo::debug($class,'autoloading class');
+		$ogclass = $class;
+		if (strstr($class,'\\'))
+			$class = '/'.str_replace('\\','/',$class);
 		if (substr($class,-10)=='Controller') {
-			Devmo::getController(substr($class,0,-10),true);
+			\Devmo::getController(str_replace('controllers/','',$class),true,true);
 		} else if (substr($class,-3)=='Dao') {
-			Devmo::getDao(substr($class,0,-3),true);
+			\Devmo::getDao(substr($class,0,-3),true);
 		} else {
-			Devmo::getLibrary($class,'load');
+			\Devmo::getLibrary($class,'load');
 		}
 	}
 
 }
 
 
-class DevmoBox {
+class Box {
 	private $devmoBoxData = array();
 
   public function __set ($name, $value) {
 		if (empty($name)) 
-			throw new InvalidDevmoException('Data Key',$name);
+			throw new \Devmo\InvalidException('Data Key',$name);
 		$this->devmoBoxData[$name] = $value;
   }
 
   public function __get ($name) {
-  	return Devmo::getValue($name,$this->devmoBoxData);
+  	return \Devmo::getValue($name,$this->devmoBoxData);
   }
 
 }
@@ -193,9 +202,9 @@ if (!defined('DEVMO_DIR'))
 if (!is_dir(DEVMO_DIR))
 	throw new Exception('Invalid DEVMO_DIR ['.DEVMO_DIR.']');
 // set default exception handler
-set_exception_handler(array('DevmoCore','handleException'));
-spl_autoload_register(array('DevmoCore','loadClass'));
+set_exception_handler(array('\Devmo\Core','handleException'));
+spl_autoload_register(array('\Devmo\Core','loadClass'));
 // sanitize data
-DevmoCore::sanitize($_GET);
-DevmoCore::sanitize($_POST);
-DevmoCore::sanitize($_REQUEST);
+\Devmo\Core::sanitize($_GET);
+\Devmo\Core::sanitize($_POST);
+\Devmo\Core::sanitize($_REQUEST);

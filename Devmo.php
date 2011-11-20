@@ -11,77 +11,82 @@ class Devmo {
 
 	public static function run () {
     try {
-      echo DevmoCore::execute()->getRoot();
-    } catch (DevmoCoreException $e) {
-    	if (DevmoCore::$debug) {
+      echo \Devmo\Core::execute()->getRoot();
+    } catch (\Devmo\CoreException $e) {
+    	if (\Devmo\Core::$debug) {
     		$controller = Devmo::getController('/Error');
     		$controller->template = $e->controller;
     		$controller->setData($e->tokens);
       	echo $controller->run();
 			} else {
 		  	header("HTTP/1.0 404 Not Found");
-      	echo DevmoCore::execute('/FourOFour')->getRoot();
+      	echo \Devmo\Core::execute('/FourOFour')->getRoot();
 			}
     }
   }
 
 
 	public static function setAppPath ($path) {
-		foreach (DevmoCore::$paths as $k=>$v) {
-			DevmoCore::$paths[$k] = array($path);
+		foreach (\Devmo\Core::$paths as $k=>$v) {
+			\Devmo\Core::$paths[$k] = array($path);
 		}
 	}
 
 
 	public static function addAppPath ($path) {
-		foreach (DevmoCore::$paths as $k=>$v) {
-			DevmoCore::$paths[$k][] = $path;
+		foreach (\Devmo\Core::$paths as $k=>$v) {
+			\Devmo\Core::$paths[$k][] = $path;
 		}
+	}
+	
+	
+	public static function setAppNamespace ($namespace) {
+		\Devmo\Core::$namespace = $namespace;
 	}
 
 
 	public static function addControllerPath ($path) {
-		DevmoCore::$paths['controllers'][] = $path;
+		\Devmo\Core::$paths['controllers'][] = $path;
 	}
 
 
 	public static function addViewPath ($path) {
-		DevmoCore::$paths['views'][] = $path;
+		\Devmo\Core::$paths['views'][] = $path;
 	}
 
 
 	public static function addLibraryPath ($path) {
-		DevmoCore::$paths['libraries'][] = $path;
+		\Devmo\Core::$paths['libraries'][] = $path;
 	}
 
 
 	public static function addDaoPath ($path) {
-		DevmoCore::$paths['daos'][] = $path;
+		\Devmo\Core::$paths['daos'][] = $path;
 	}
 
 
 	public static function addMapping ($mapping) {
-		DevmoCore::$mappings[] = $mapping;
+		\Devmo\Core::$mappings[] = $mapping;
 	}
 
 
 	public static function setDebug ($debug=false) {
-		DevmoCore::$debug = ($debug==true);
+		\Devmo\Core::$debug = ($debug==true);
 	}
 
 
 	public static function setLog ($file) {
-		Logger::setDefaultFile($file);
+		\Devmo\Logger::setDefaultFile($file);
 	}
 
 
 	public static function setHomeController ($controller) {
-		DevmoCore::$homeController = $controller;
+		\Devmo\Core::$homeController = $controller;
 	}
 
 
 	public static function setRequestedController ($controller) {
-		DevmoCore::$requestedController = $controller;
+		\Devmo\Core::$requestedController = $controller;
 	}
 
 
@@ -127,19 +132,22 @@ class Devmo {
    * @return bool Whether debug is on or off
    */
   public static function isDebug() {
-  	return DevmoCore::$debug;
+  	return \Devmo\Core::$debug;
   }
 
 
-  public static function getController ($controller, $loadOnly=false) {
+  public static function getController ($controller, $loadOnly=false, $fromAutoloader=false) {
     $ajax = false;
     if (substr($controller,0,5)=='/ajax') {
     	$controller = substr($controller,5);
     	$ajax = true;
     }
-		$controller = DevmoCore::getObject(
-			DevmoCore::getFile('controllers',$controller.'Controller'),
-			'Controller',
+		$controller = $fromAutoloader
+			? preg_replace('=/controllers/([^/]+)$=','/\1',$controller)
+			: preg_replace('=/([^/]+)$=','/\1Controller',$controller);
+		$controller = \Devmo\Core::getObject(
+			\Devmo\Core::getFile('controllers',$controller),
+			'\Devmo\Controller',
 			($loadOnly?'load':'new'));
 		if ($loadOnly)
 			return true;
@@ -149,8 +157,8 @@ class Devmo {
 
 	
   public static function getView ($template, $tokens=null) {
-  	$view = new View();
-		$view->setTemplate(DevmoCore::getFile('views',$template)->file);
+  	$view = new \Devmo\View();
+		$view->setTemplate(\Devmo\Core::getFile('views',$template)->file);
   	if (is_object($tokens) || is_array($tokens))
   		$view->setTokens($tokens);
   	return $view;
@@ -158,16 +166,24 @@ class Devmo {
 
 
   public static function getDao ($dao, $loadOnly=false) {
-		return DevmoCore::getObject(
-			DevmoCore::getFile('daos',$dao.'Dao'),
-			'Dao',
+		return \Devmo\Core::getObject(
+			\Devmo\Core::getFile('daos',$dao.'Dao'),
+			'\Devmo\Dao',
+			($loadOnly?'load':'auto'));
+  }
+
+
+  public static function getDto ($dto, $loadOnly=false) {
+		return \Devmo\Core::getObject(
+			\Devmo\Core::getFile('dtos',$dto.'Dto'),
+			'\Devmo\Dto',
 			($loadOnly?'load':'auto'));
   }
 
 
   public static function getLibrary ($class, $option='auto') {
-    return DevmoCore::getObject(
-    	DevmoCore::getFile('libraries',$class),
+    return \Devmo\Core::getObject(
+    	\Devmo\Core::getFile('libraries',$class),
     	null,
     	$option);
   }
@@ -201,8 +217,9 @@ class Devmo {
 }
 
 // require core classes
-require(DEVMO_DIR."/libraries/DevmoException.php");
-require(DEVMO_DIR."/libraries/DevmoCore.php");
+define('DEVMO_DIR',preg_replace('=^(.+)/[^/]+$=','\1',__FILE__));
+require(DEVMO_DIR."/libraries/Exception.php");
+require(DEVMO_DIR."/libraries/Core.php");
 require(DEVMO_DIR."/libraries/Deprecated.php");
 // set defaults
 Devmo::setDebug(false);

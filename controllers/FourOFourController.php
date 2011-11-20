@@ -7,7 +7,7 @@
  * @copyright Copyright (c) 2007 Devmo
  * @version 1.0
  */
-class FourOFourController extends Controller {
+class FourOFourController extends \Devmo\Controller {
 
   public function run () {
     $view = $this->getView('/SiteWrapper');

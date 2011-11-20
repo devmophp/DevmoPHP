@@ -8,6 +8,8 @@
  * @category Utility
  * @version 1.0
  */
+namespace Devmo;
+
 class Logger {
   private static $_self;
   private static $dir;
@@ -128,4 +130,3 @@ class Logger {
   }
 
 } // EOC
-?>
