@@ -14,7 +14,7 @@ class Devmo {
       echo \Devmo\Core::execute()->getRoot();
     } catch (\Devmo\CoreException $e) {
     	if (\Devmo\Core::$debug) {
-    		$controller = Devmo::getController('/Error');
+    		$controller = self::getController('/Error');
     		$controller->template = $e->controller;
     		$controller->setData($e->tokens);
       	echo $controller->run();
@@ -147,7 +147,7 @@ class Devmo {
 			: preg_replace('=/([^/]+)$=','/\1Controller',$controller);
 		$controller = \Devmo\Core::getObject(
 			\Devmo\Core::getFile('controllers',$controller),
-			'\Devmo\Controller',
+			'\Devmo\controllers\Controller',
 			($loadOnly?'load':'new'));
 		if ($loadOnly)
 			return true;

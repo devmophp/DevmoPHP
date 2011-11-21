@@ -8,7 +8,6 @@
  * @version 1.0
  */
 namespace Devmo\controllers;
-
 class ErrorController extends \Devmo\controllers\Controller {
 	public $template;
 

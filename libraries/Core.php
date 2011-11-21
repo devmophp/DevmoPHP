@@ -88,20 +88,19 @@ class Core {
     $devmoFile = null;
     if (!is_file($file)) {
     	$devmoFile = DEVMO_DIR.'/'.$type.'/'.$name.'.php';
-			//\Devmo::debug($devmoFile,'Core::getFile('.$type.','.$ogname.')');
     	if (is_file($devmoFile)) {
 		    $file = $devmoFile;
 			} else { 
-				\Devmo::debug($file,'Core::getFile('.$type.','.$ogname.')','trace');
+				//\Devmo::debug($file,'Core::getFile('.$type.','.$ogname.')','trace');
 	      throw new \Devmo\CoreException('/FileNotFound',array('file'=>$file));
 			}
     }
 		// return file box
 		$box = new \Devmo\Box;
-		$box->class = ($devmoFile ? '\Devmo\\'.$name : str_replace('/','\\',self::$namespace.$context.$type.'/'.$name));
+		$box->class = ($devmoFile ? '\Devmo\\'.$type.'\\'.$name : str_replace('/','\\',self::$namespace.$context.$type.'/'.$name));
 		$box->file = $file;
 		$box->context = $context;
-		// \Devmo::debug($box,'Core::getFile('.$type.','.$ogname.')');
+		//\Devmo::debug($box,'Core::getFile('.$type.','.$ogname.')');
 		return $box;
 	} 
 	
@@ -117,7 +116,7 @@ class Core {
       throw new \Devmo\CoreException('ClassNotFound',array('class'=>$class,'file'=>$file->file));
     //  check for parent class
     if ($parentClass && !class_exists($parentClass))
-      throw new \Devmo\CoreException('ClassNotFound',array('class'=>$parentClass,'file'=>$file->getFile()));
+      throw new \Devmo\CoreException('ClassNotFound',array('class'=>$parentClass,'file'=>$file->file));
     //  handle options
     $obj = null;
     switch ($option) {

@@ -7,9 +7,9 @@
  * @copyright Copyright (c) 2007 Devmo
  * @version 1.0
  */
-namespace Devmo;
+namespace Devmo\controllers;
 
-class SiteWrapperController extends \Devmo\Controller {
+class SiteWrapperController extends \Devmo\controllers\Controller {
 
   public function run () {
     return $this->getView('/SiteWrapper',$this->getData());

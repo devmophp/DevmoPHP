@@ -1,5 +1,5 @@
 <?php
-namespace Devmo;
+namespace Devmo\controllers;
 
 abstract class Controller extends \Devmo\libraries\Loader {
   protected $success = null;
