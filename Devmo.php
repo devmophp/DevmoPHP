@@ -29,7 +29,6 @@ class Devmo {
 				$controller->setData($e->tokens);
 				echo $controller->run();
 			} else {
-				header("HTTP/1.0 404 Not Found");
 				echo Core::execute('/FourOFour')->getRoot();
 			}
 		}
