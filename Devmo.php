@@ -14,11 +14,14 @@ use \Devmo\libs\CoreException;
  *
  * @category Framework
  * @author Dan Wager
- * @copyright Copyright (c) 2007 Devmo
+ * @copyright Copyright (c) 2011 Devmo
  * @version 1.0
  */
 class Devmo {
-
+	/**
+	 * 
+	 * Enter description here ...
+	 */
 	public static function run () {
 		try {
 			echo Core::execute()->getRoot();
@@ -33,72 +36,112 @@ class Devmo {
 			}
 		}
 	}
-
-
+	/**
+	 * 
+	 * Enter description here ...
+	 * @param unknown_type $path
+	 */
 	public static function setAppPath ($path) {
 		foreach (Core::$paths as $k=>$v) {
 			Core::$paths[$k] = array($path);
 		}
 	}
-
-
+	/**
+	 * 
+	 * Enter description here ...
+	 * @param unknown_type $path
+	 */
 	public static function addAppPath ($path) {
 		foreach (Core::$paths as $k=>$v) {
 			Core::$paths[$k][] = $path;
 		}
 	}
-
-
+	/**
+	 * 
+	 * Enter description here ...
+	 * @param unknown_type $namespace
+	 */
 	public static function setAppNamespace ($namespace) {
 		Core::$namespace = $namespace;
 	}
-
-
+	/**
+	 * 
+	 * Enter description here ...
+	 * @param unknown_type $path
+	 */
 	public static function addControllerPath ($path) {
 		Core::$paths['controllers'][] = $path;
 	}
-
-
+	/**
+	 * 
+	 * Enter description here ...
+	 * @param unknown_type $path
+	 */
 	public static function addViewPath ($path) {
 		Core::$paths['views'][] = $path;
 	}
-
-
+	/**
+	 * 
+	 * Enter description here ...
+	 * @param unknown_type $path
+	 */
 	public static function addLibPath ($path) {
 		Core::$paths['libs'][] = $path;
 	}
-
-
+	/**
+	 * 
+	 * Enter description here ...
+	 * @param $path
+	 */
 	public static function addDaoPath ($path) {
 		Core::$paths['daos'][] = $path;
 	}
-
-
+	/**
+	 * 
+	 * Enter description here ...
+	 * @param unknown_type $mapping
+	 */
 	public static function addMapping ($mapping) {
 		Core::$mappings[] = $mapping;
 	}
-
-
+	/**
+	 * 
+	 * Enter description here ...
+	 * @param unknown_type $debug
+	 */
 	public static function setDebug ($debug=false) {
 		Core::$debug = ($debug==true);
 	}
-
-
+	/**
+	 * 
+	 * Enter description here ...
+	 * @param unknown_type $file
+	 */
 	public static function setLog ($file) {
 		Logger::setDefaultFile($file);
 	}
-
-
+	/**
+	 * 
+	 * Enter description here ...
+	 * @param unknown_type $controller
+	 */
 	public static function setHomeController ($controller) {
 		Core::$homeController = $controller;
 	}
-
-
+	/**
+	 * 
+	 * Enter description here ...
+	 * @param unknown_type $controller
+	 */
 	public static function setRequestedController ($controller) {
 		Core::$requestedController = $controller;
 	}
-
-
+	/**
+	 * 
+	 * Enter description here ...
+	 * @param unknown_type $name
+	 * @param unknown_type $mixed
+	 */
 	public static function getValue ($name, $mixed=null) {
 		if (is_array($mixed))
 			return isset($mixed[$name])
@@ -109,32 +152,46 @@ class Devmo {
 				? $mixed->{$name}
 				: false;
 	}
-
-
+	/**
+	 * 
+	 * Enter description here ...
+	 * @param unknown_type $name
+	 */
 	public static function getSession ($name) {
 		return self::getValue($name,$_SESSION);
 	}
-
-
+	/**
+	 * 
+	 * Enter description here ...
+	 * @param unknown_type $name
+	 */
 	public static function getGet ($name) {
 		return self::getValue($name,$_GET);
 	}
-
-
+	/**
+	 * 
+	 * Enter description here ...
+	 * @param unknown_type $name
+	 */
 	public static function getPost ($name) {
 		return self::getValue($name,$_POST);
 	}
-
-
+	/**
+	 * 
+	 * Enter description here ...
+	 * @param unknown_type $name
+	 */
 	public static function getRequest ($name) {
 		return self::getValue($name,$_REQUEST);
 	}
-
-
+	/**
+	 * 
+	 * Enter description here ...
+	 * @param unknown_type $name
+	 */
 	public static function getServer ($name) {
 		return self::getValue($name,$_SERVER);
 	}
-
 	/**
 	 * Returns the current debug setting
 	 *
@@ -143,18 +200,30 @@ class Devmo {
 	public static function isDebug() {
 		return Core::$debug;
 	}
-
-
+	/**
+	 * 
+	 * Enter description here ...
+	 * @param unknown_type $class
+	 * @param unknown_type $option
+	 */
 	public static function getObject ($class, $option='auto') {
 		return Core::getObject($class,$option);
 	}
-
-
+	/**
+	 * 
+	 * Enter description here ...
+	 * @param unknown_type $class
+	 */
 	public static function loadObject ($class) {
 		return Core::getObject($class,'load');
 	}
-
-
+	/**
+	 * 
+	 * Enter description here ...
+	 * @param unknown_type $obj
+	 * @param unknown_type $text
+	 * @param unknown_type $opt
+	 */
 	public static function debug ($obj, $text='DEBUG', $opt=FALSE) {
 		echo "<pre>\n";
 		echo "{$text}\n";
