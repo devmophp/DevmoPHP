@@ -68,7 +68,6 @@ class Core {
 
 
 	public static function getFileBox ($name) {
-		$ogname = $name;
 		preg_match('/^(.*?)([^\.]+)\.([^\.]+)$/',$name,$matches);
 		// find context
 		$context = null;
@@ -173,7 +172,6 @@ class Core {
 	}
 
 	public static function loadClass ($class) {
-		$ogclass = $class;
 		if (strstr($class,'\\'))
 			$class = str_replace(array('/','\\'),'.',$class);
 		self::getObject($class,'load');
@@ -199,11 +197,6 @@ class Box {
 // check for magic quotes
 if (get_magic_quotes_gpc())
 	die("Magic Quotes Config is On... exiting.");
-// path checks
-if (!defined('DEVMO_DIR'))
-	throw new Exception('Missing Constant DEVMO_DIR');
-if (!is_dir(DEVMO_DIR))
-	throw new Exception('Invalid DEVMO_DIR ['.DEVMO_DIR.']');
 // set default exception handler
 set_exception_handler(array('\Devmo\libs\Core','handleException'));
 spl_autoload_register(array('\Devmo\libs\Core','loadClass'));
