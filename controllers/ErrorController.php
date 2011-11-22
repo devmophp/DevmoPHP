@@ -16,7 +16,7 @@ class ErrorController extends \Devmo\controllers\Controller {
     $message = "Error:";
 		foreach ($this->getData() as $k=>$v)
 			$message .= " {$k}:{$v}";
-    \Devmo\Logger::add($message);
+    \Devmo\libs\Logger::add($message);
     // build wrapper
     $error = $this->getView("{$this->template}Error",$this->getData());
     $view = $this->getView('/Error',array('body'=>$error));

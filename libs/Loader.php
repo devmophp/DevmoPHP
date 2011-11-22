@@ -1,8 +1,13 @@
 <?php
-namespace Devmo\libraries;
+namespace Devmo\libs;
 
 class Loader {
 	private $context = null;
+	private $fileBox = null;
+
+  public function setFileBox (\Devmo\libs\Box $fileBox) {
+  	$this->fileBox = $fileBox;
+  }
 
   public function setContext ($context) {
   	$this->context = $context;
@@ -20,12 +25,18 @@ class Loader {
 
   protected function getView ($template=null, $tokens=null) {
   	if (!$template) {
-  		$template = preg_replace(
-  			array('=\\\=','=(/?)([a-zA-Z0-9]*)[cC]ontroller[s]?=','=[/]{2,}='),
-  			array('/','\1\2','/'),
-  			'/'.get_class($this));
+  		$template = basename(str_replace('\\','/',$this->fileBox->class));
+  		$appPostfix = Core::getAppPostfix('controllers');
+			$corePostfix = Core::getCorePostfix('controllers');
+  		$template = preg_replace('=('.$appPostfix.'|'.$corePostfix.')$=','',$template);
 		}
-		$view = \Devmo::getView($template,$tokens);
+		if (!strstr($template,'.'))
+			$template = $this->fileBox->context.'views.'.$template;
+		$fileBox = Core::getFileBox($template);
+		$view = new \Devmo\libs\View();
+		$view->setTemplate($fileBox->file);
+		if ($tokens)
+			$view->setTokens($tokens);
   	return $view;
   }
 
@@ -34,7 +45,7 @@ class Loader {
   }
 
   protected function runController ($controller, $data=null) {
-  	return \Devmo\Core::execute($this->addContextToPath($controller),$data);
+  	return \Devmo\libs\Core::execute($this->addContextToPath($controller),$data);
   }
 
   protected function getDao ($dao) {

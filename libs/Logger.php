@@ -8,7 +8,7 @@
  * @category Utility
  * @version 1.0
  */
-namespace Devmo;
+namespace Devmo\libs;
 
 class Logger {
   private static $_self;
