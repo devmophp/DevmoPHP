@@ -194,11 +194,6 @@ class Box {
 	public function __get ($name) {
 		return Devmo::getValue($name,$this->devmoBoxData);
 	}
-
-}
-
-
-abstract class Dao {
 }
 
 // check for magic quotes
