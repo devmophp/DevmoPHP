@@ -86,7 +86,7 @@ class Devmo {
 
 
 	public static function setRequestedController ($controller) {
-		\Devmo\libs\Core::$requestedController = str_replace(array('/','.'),'.',$controller);
+		\Devmo\libs\Core::$requestedController = $controller;
 	}
 
 
