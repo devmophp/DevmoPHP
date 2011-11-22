@@ -1,4 +1,14 @@
 <?php
+// require core classes
+define('DEVMO_DIR',preg_replace('=^(.+)/[^/]+$=','\1',__FILE__));
+require(DEVMO_DIR."/libs/Core.php");
+require(DEVMO_DIR."/libs/Exception.php");
+require(DEVMO_DIR."/libs/Deprecated.php");
+
+use \Devmo\libs\Core;
+use \Devmo\libs\Logger;
+use \Devmo\libs\CoreException;
+
 /**
  * Main initializer for essentail properties
  *
@@ -11,82 +21,82 @@ class Devmo {
 
 	public static function run () {
 		try {
-			echo \Devmo\libs\Core::execute()->getRoot();
-		} catch (\Devmo\libs\CoreException $e) {
-			if (\Devmo\libs\Core::$debug) {
+			echo Core::execute()->getRoot();
+		} catch (CoreException $e) {
+			if (Core::$debug) {
 				$controller = self::getObject('Devmo.controllers.Error');
 				$controller->template = $e->controller;
 				$controller->setData($e->tokens);
 				echo $controller->run();
 			} else {
 				header("HTTP/1.0 404 Not Found");
-				echo \Devmo\libs\Core::execute('/FourOFour')->getRoot();
+				echo Core::execute('/FourOFour')->getRoot();
 			}
 		}
 	}
 
 
 	public static function setAppPath ($path) {
-		foreach (\Devmo\libs\Core::$paths as $k=>$v) {
-			\Devmo\libs\Core::$paths[$k] = array($path);
+		foreach (Core::$paths as $k=>$v) {
+			Core::$paths[$k] = array($path);
 		}
 	}
 
 
 	public static function addAppPath ($path) {
-		foreach (\Devmo\libs\Core::$paths as $k=>$v) {
-			\Devmo\libs\Core::$paths[$k][] = $path;
+		foreach (Core::$paths as $k=>$v) {
+			Core::$paths[$k][] = $path;
 		}
 	}
 
 
 	public static function setAppNamespace ($namespace) {
-		\Devmo\libs\Core::$namespace = $namespace;
+		Core::$namespace = $namespace;
 	}
 
 
 	public static function addControllerPath ($path) {
-		\Devmo\libs\Core::$paths['controllers'][] = $path;
+		Core::$paths['controllers'][] = $path;
 	}
 
 
 	public static function addViewPath ($path) {
-		\Devmo\libs\Core::$paths['views'][] = $path;
+		Core::$paths['views'][] = $path;
 	}
 
 
 	public static function addLibPath ($path) {
-		\Devmo\libs\Core::$paths['libs'][] = $path;
+		Core::$paths['libs'][] = $path;
 	}
 
 
 	public static function addDaoPath ($path) {
-		\Devmo\libs\Core::$paths['daos'][] = $path;
+		Core::$paths['daos'][] = $path;
 	}
 
 
 	public static function addMapping ($mapping) {
-		\Devmo\libs\Core::$mappings[] = $mapping;
+		Core::$mappings[] = $mapping;
 	}
 
 
 	public static function setDebug ($debug=false) {
-		\Devmo\libs\Core::$debug = ($debug==true);
+		Core::$debug = ($debug==true);
 	}
 
 
 	public static function setLog ($file) {
-		\Devmo\libs\Logger::setDefaultFile($file);
+		Logger::setDefaultFile($file);
 	}
 
 
 	public static function setHomeController ($controller) {
-		\Devmo\libs\Core::$homeController = $controller;
+		Core::$homeController = $controller;
 	}
 
 
 	public static function setRequestedController ($controller) {
-		\Devmo\libs\Core::$requestedController = $controller;
+		Core::$requestedController = $controller;
 	}
 
 
@@ -132,17 +142,17 @@ class Devmo {
 	 * @return bool Whether debug is on or off
 	 */
 	public static function isDebug() {
-		return \Devmo\libs\Core::$debug;
+		return Core::$debug;
 	}
 
 
 	public static function getObject ($class, $option='auto') {
-		return \Devmo\libs\Core::getObject($class,$option);
+		return Core::getObject($class,$option);
 	}
 
 
 	public static function loadObject ($class) {
-		return \Devmo\libs\Core::getObject($class,'load');
+		return Core::getObject($class,'load');
 	}
 
 
@@ -170,14 +180,8 @@ class Devmo {
 		}
 		echo "\n</pre>";
 	}
-
 }
 
-// require core classes
-define('DEVMO_DIR',preg_replace('=^(.+)/[^/]+$=','\1',__FILE__));
-require(DEVMO_DIR."/libs/Exception.php");
-require(DEVMO_DIR."/libs/Core.php");
-require(DEVMO_DIR."/libs/Deprecated.php");
 // set defaults
 Devmo::setDebug(false);
 Devmo::setLog('../log/'.strtolower(Devmo::getServer('HTTP_HOST')).'.log');

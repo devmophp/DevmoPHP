@@ -1,6 +1,10 @@
 <?php
 namespace Devmo\libs;
 
+use \Devmo\libs\CoreException;
+use \Devmo\libs\InvalidException;
+use \Devmo;
+
 class Core {
 	public static $debug = false;
 	public static $paths = array('controllers'=>array(),'views'=>array(),'libs'=>array(),'daos'=>array(),'dtos'=>array());
@@ -21,7 +25,7 @@ class Core {
 		}
 		//	get controller view
 		if (!$view = self::executeController($controller,$data))
-			throw new \Devmo\libs\CoreException('ViewNotFound',array('controller'=>'?'));
+			throw new CoreException('ViewNotFound',array('controller'=>'?'));
 		return $view;
 	}
 
@@ -93,8 +97,7 @@ class Core {
 			if (is_file($devmoFile)) {
 				$file = $devmoFile;
 			} else {
-				\Devmo::debug($file,'Core::getFile('.$ogname.')','trace');
-				throw new \Devmo\libs\CoreException('/FileNotFound',array('file'=>$file));
+				throw new CoreException('/FileNotFound',array('file'=>$file));
 			}
 		}
 		// return file box
@@ -118,7 +121,7 @@ class Core {
 		$class = $file->class;
 		// load file
 		if (!class_exists($class))
-			throw new \Devmo\libs\CoreException('ClassNotFound',array('class'=>$class,'file'=>$file->file));
+			throw new CoreException('ClassNotFound',array('class'=>$class,'file'=>$file->file));
 		//  check for parent class
 		$parentClass = null;
 		switch ($file->type) {
@@ -128,7 +131,7 @@ class Core {
 			case 'dtos': $parentClass = '\Devmo\dtos\Dto'; break;
 		}
 		if ($parentClass && !class_exists($parentClass))
-			throw new \Devmo\libs\CoreException('ClassNotFound',array('class'=>$parentClass,'file'=>$file->file));
+			throw new CoreException('ClassNotFound',array('class'=>$parentClass,'file'=>$file->file));
 		//  handle options
 		$obj = null;
 		switch ($option) {
@@ -146,7 +149,7 @@ class Core {
 				break;
 		}
 		if ($parentClass && !($obj instanceof $parentClass))
-			throw new \Devmo\libs\CoreException('ClassNotController',array('class'=>$file->getClass(),'file'=>$file->getFile()));
+			throw new CoreException('ClassNotController',array('class'=>$file->getClass(),'file'=>$file->getFile()));
 		if (($obj instanceof Loader))
 			$obj->setFileBox($file);
 		return $obj;
@@ -163,10 +166,10 @@ class Core {
 
 	public static function handleException (Exception $e) {
 		self::$debug
-			? \Devmo::debug($e->__toString(),'log entry')
-			: \Devmo::debug($e->getMessage(),'See the error log for more details');
+			? Devmo::debug($e->__toString(),'log entry')
+			: Devmo::debug($e->getMessage(),'See the error log for more details');
 		if (!Logger::add($e->__toString()))
-			\Devmo::debug(null,'Could not log error');
+			Devmo::debug(null,'Could not log error');
 	}
 
 	public static function loadClass ($class) {
@@ -184,12 +187,12 @@ class Box {
 
 	public function __set ($name, $value) {
 		if (empty($name))
-			throw new \Devmo\InvalidException('Data Key',$name);
+			throw new InvalidException('Data Key',$name);
 		$this->devmoBoxData[$name] = $value;
 	}
 
 	public function __get ($name) {
-		return \Devmo::getValue($name,$this->devmoBoxData);
+		return Devmo::getValue($name,$this->devmoBoxData);
 	}
 
 }
@@ -210,6 +213,6 @@ if (!is_dir(DEVMO_DIR))
 set_exception_handler(array('\Devmo\libs\Core','handleException'));
 spl_autoload_register(array('\Devmo\libs\Core','loadClass'));
 // sanitize data
-\Devmo\libs\Core::sanitize($_GET);
-\Devmo\libs\Core::sanitize($_POST);
-\Devmo\libs\Core::sanitize($_REQUEST);
+Core::sanitize($_GET);
+Core::sanitize($_POST);
+Core::sanitize($_REQUEST);
