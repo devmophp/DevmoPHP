@@ -24,15 +24,15 @@ class Devmo {
 	 */
 	public static function run () {
 		try {
-			echo Core::execute()->getRoot();
+			return Core::execute()->getRoot();
 		} catch (CoreException $e) {
 			if (Core::$debug) {
 				$controller = self::getObject('Devmo.controllers.Error');
 				$controller->template = $e->controller;
 				$controller->setData($e->tokens);
-				echo $controller->run();
+				return $controller->run();
 			} else {
-				echo Core::execute('/FourOFour')->getRoot();
+				return Core::execute('/FourOFour')->getRoot();
 			}
 		}
 	}
