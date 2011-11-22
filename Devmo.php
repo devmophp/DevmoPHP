@@ -10,20 +10,20 @@
 class Devmo {
 
 	public static function run () {
-    try {
-      echo \Devmo\libs\Core::execute()->getRoot();
-    } catch (\Devmo\libs\CoreException $e) {
-    	if (\Devmo\libs\Core::$debug) {
-    		$controller = self::getObject('Devmo.controllers.Error');
-    		$controller->template = $e->controller;
-    		$controller->setData($e->tokens);
-      	echo $controller->run();
+		try {
+			echo \Devmo\libs\Core::execute()->getRoot();
+		} catch (\Devmo\libs\CoreException $e) {
+			if (\Devmo\libs\Core::$debug) {
+				$controller = self::getObject('Devmo.controllers.Error');
+				$controller->template = $e->controller;
+				$controller->setData($e->tokens);
+				echo $controller->run();
 			} else {
-		  	header("HTTP/1.0 404 Not Found");
-      	echo \Devmo\libs\Core::execute('/FourOFour')->getRoot();
+				header("HTTP/1.0 404 Not Found");
+				echo \Devmo\libs\Core::execute('/FourOFour')->getRoot();
 			}
-    }
-  }
+		}
+	}
 
 
 	public static function setAppPath ($path) {
@@ -38,8 +38,8 @@ class Devmo {
 			\Devmo\libs\Core::$paths[$k][] = $path;
 		}
 	}
-	
-	
+
+
 	public static function setAppNamespace ($namespace) {
 		\Devmo\libs\Core::$namespace = $namespace;
 	}
@@ -90,85 +90,85 @@ class Devmo {
 	}
 
 
-  public static function getValue ($name, $mixed=null) {
-  	if (is_array($mixed))
+	public static function getValue ($name, $mixed=null) {
+		if (is_array($mixed))
 			return isset($mixed[$name])
-	      ? $mixed[$name]
-  	    : false;
+				? $mixed[$name]
+				: false;
 		if (is_object($mixed))
 			return isset($mixed->{$name})
 				? $mixed->{$name}
 				: false;
-  }
+	}
 
 
-  public static function getSession ($name) {
-    return self::getValue($name,$_SESSION);
-  }
+	public static function getSession ($name) {
+		return self::getValue($name,$_SESSION);
+	}
 
 
-  public static function getGet ($name) {
-    return self::getValue($name,$_GET);
-  }
+	public static function getGet ($name) {
+		return self::getValue($name,$_GET);
+	}
 
 
-  public static function getPost ($name) {
-    return self::getValue($name,$_POST);
-  }
+	public static function getPost ($name) {
+		return self::getValue($name,$_POST);
+	}
 
 
-  public static function getRequest ($name) {
-    return self::getValue($name,$_REQUEST);
-  }
-	
-	
-  public static function getServer ($name) {
-    return self::getValue($name,$_SERVER);
-  }
-  
-  /**
-   * Returns the current debug setting
-   * 
-   * @return bool Whether debug is on or off
-   */
-  public static function isDebug() {
-  	return \Devmo\libs\Core::$debug;
-  }
+	public static function getRequest ($name) {
+		return self::getValue($name,$_REQUEST);
+	}
 
 
-  public static function getObject ($class, $option='auto') {
-    return \Devmo\libs\Core::getObject($class,$option);
-  }
+	public static function getServer ($name) {
+		return self::getValue($name,$_SERVER);
+	}
+
+	/**
+	 * Returns the current debug setting
+	 *
+	 * @return bool Whether debug is on or off
+	 */
+	public static function isDebug() {
+		return \Devmo\libs\Core::$debug;
+	}
 
 
-  public static function loadObject ($class) {
-    return \Devmo\libs\Core::getObject($class,'load');
-  }
+	public static function getObject ($class, $option='auto') {
+		return \Devmo\libs\Core::getObject($class,$option);
+	}
+
+
+	public static function loadObject ($class) {
+		return \Devmo\libs\Core::getObject($class,'load');
+	}
 
 
 	public static function debug ($obj, $text='DEBUG', $opt=FALSE) {
-	  echo "<pre>\n";
-	  echo "{$text}\n";
-	  switch ($opt) {
-	    default:
+		echo "<pre>\n";
+		echo "{$text}\n";
+		switch ($opt) {
+			default:
 				print_r($obj);
 				break;
-	    case 'fatal':
+			case 'fatal':
 				print_r($obj);
 				exit;
 				break;
-	    case 'trace':
+			case 'trace':
 				debug_print_backtrace();
 				print_r($obj);
 				break;
-	    case 'obj':
+			case 'obj':
 				print_r($obj);
 				break;
-	    case 'xml':
+			case 'xml':
 				echo $obj->asXML();
 				break;
-	  }
-	  echo "\n</pre>";
+		}
+		echo "\n</pre>";
 	}
 
 }
