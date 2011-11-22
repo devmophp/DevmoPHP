@@ -5,8 +5,6 @@ class Core {
 	public static $debug = false;
 	public static $paths = array('controllers'=>array(),'views'=>array(),'libs'=>array(),'daos'=>array(),'dtos'=>array());
 	public static $folders = array('controllers'=>'_controllers','views'=>'_views','libs'=>'_libs','daos'=>'_daos','dtos'=>'_dtos');
-	public static $corePostfix = array('controllers'=>'Controller','daos'=>'Dao','dtos'=>'Dto','libs'=>null);
-	public static $appPostfix = array('controllers'=>'Controller','daos'=>'Dao','dtos'=>'Dto','libs'=>null);
 	public static $mappings = array();
 	public static $homeController = null;
 	public static $requestedController = null;
@@ -63,22 +61,6 @@ class Core {
     	return $view;
     }
   }
-
-	public static function getAppPostfix ($type, $name=null) {
-		$postfix = null;
-		if (isset(self::$appPostfix[$type]) 
-				&& ($length=strlen(self::$appPostfix[$type]))
-				&& self::$appPostfix[$type]!=substr($name,($length*-1),$length))
-			$postfix = self::$appPostfix[$type];
-		return $postfix;
-	}
-
-	public static function getCorePostfix ($type, $name=null) {
-		$postfix = null;
-		if (isset(self::$corePostfix[$type]) && self::$corePostfix[$type]!=$name)
-			$postfix = self::$corePostfix[$type];
-		return $postfix;
-	}
 	
 	
 	public static function getFileBox ($name) {
@@ -95,7 +77,7 @@ class Core {
 		// format name
 		$name = preg_replace('/[ _-]+/','',ucwords($matches[3]));
 		// put it together
-		$subPath = str_replace('.','/','/'.$context.self::$folders[$type]).'/'.$name.self::getAppPostfix($type,$name).'.php';
+		$subPath = str_replace('.','/','/'.$context.self::$folders[$type]).'/'.$name.'.php';
 		// find it
 		$file = null;
   	foreach (self::$paths[$type] as $path) {
@@ -107,7 +89,7 @@ class Core {
     //  check framwork core
     $devmoFile = null;
     if (!is_file($file)) {
-    	$devmoFile = DEVMO_DIR.'/'.$type.'/'.$name.self::getCorePostfix($type,$name).'.php';
+    	$devmoFile = DEVMO_DIR.'/'.$type.'/'.$name.'.php';
     	if (is_file($devmoFile)) {
 		    $file = $devmoFile;
 			} else { 
@@ -119,8 +101,8 @@ class Core {
 		$box = new Box;
 		$box->type = $type;
 		$box->class = ($devmoFile 
-			? '\Devmo\\'.$type.'\\'.$name.self::getCorePostfix($type,$name) 
-			: str_replace('.','\\',self::$namespace.'\\'.$context.$type.'\\'.$name.self::getAppPostfix($type,$name)));
+			? '\Devmo\\'.$type.'\\'.$name 
+			: str_replace('.','\\',self::$namespace.'\\'.$context.$type.'\\'.$name));
 		$box->file = $file;
 		$box->context = $context;
 		return $box;

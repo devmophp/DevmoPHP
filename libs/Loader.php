@@ -24,12 +24,8 @@ class Loader {
   }
 
   protected function getView ($template=null, $tokens=null) {
-  	if (!$template) {
+  	if (!$template)
   		$template = basename(str_replace('\\','/',$this->fileBox->class));
-  		$appPostfix = Core::getAppPostfix('controllers');
-			$corePostfix = Core::getCorePostfix('controllers');
-  		$template = preg_replace('=('.$appPostfix.'|'.$corePostfix.')$=','',$template);
-		}
 		if (!strstr($template,'.'))
 			$template = $this->fileBox->context.'views.'.$template;
 		$fileBox = Core::getFileBox($template);
