@@ -9,7 +9,7 @@
  */
 namespace Devmo\controllers;
 class Error extends \Devmo\controllers\Controller {
-	public $template;
+	public $exception;
 
   public function run () {
 		// log it
@@ -18,10 +18,14 @@ class Error extends \Devmo\controllers\Controller {
 			$message .= " {$k}:{$v}";
     \Devmo\libs\Logger::add($message);
     // build wrapper
-    $error = $this->getView("{$this->template}Error",$this->getData());
-    $view = $this->getView('/Error',array('body'=>$error));
-    $wrap = $this->runController('/SiteWrapper',array('body'=>$view));
+    $error = $this->getView("Devmo.views.{$this->exception->error}Error",$this->getData());
+    $view = $this->getView('Devmo.views.Error',array('body'=>$error));
+    $wrap = $this->runController('Devmo.controllers.SiteWrapper',array('body'=>$view));
     return $wrap;
   }
+	
+	public function setException ($exception) {
+		$this->exception = $exception;
+	}
 
 }

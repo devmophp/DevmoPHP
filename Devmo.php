@@ -28,11 +28,11 @@ class Devmo {
 		} catch (CoreException $e) {
 			if (Core::$debug) {
 				$controller = self::getObject('Devmo.controllers.Error');
-				$controller->template = $e->controller;
+				$controller->setException($e);
 				$controller->setData($e->tokens);
 				return $controller->run();
 			} else {
-				return Core::execute('/FourOFour')->getRoot();
+				return Core::execute('Devmo.controllers.FourOFour')->getRoot();
 			}
 		}
 	}
@@ -41,60 +41,47 @@ class Devmo {
 	 * Enter description here ...
 	 * @param unknown_type $path
 	 */
-	public static function setAppPath ($path) {
-		foreach (Core::$paths as $k=>$v) {
-			Core::$paths[$k] = array($path);
-		}
-	}
-	/**
-	 * 
-	 * Enter description here ...
-	 * @param unknown_type $path
-	 */
-	public static function addAppPath ($path) {
-		foreach (Core::$paths as $k=>$v) {
-			Core::$paths[$k][] = $path;
-		}
+	public static function addAppNamespace ($namespace, $path, $default=false) {
+		foreach (Core::$namespaces as $k=>$v)
+			Core::$namespaces[$k][$namespace] = $path;
+		if ($default || Core::$namespace==null)
+			Core::$namespace = $namespace;
 	}
 	/**
 	 * 
 	 * Enter description here ...
 	 * @param unknown_type $namespace
-	 */
-	public static function setAppNamespace ($namespace) {
-		Core::$namespace = $namespace;
-	}
-	/**
-	 * 
-	 * Enter description here ...
 	 * @param unknown_type $path
 	 */
-	public static function addControllerPath ($path) {
-		Core::$paths['controllers'][] = $path;
+	public static function addControllerNamespace ($namespace, $path) {
+		Core::$paths['controllers'][$namespace] = $path;
 	}
 	/**
 	 * 
 	 * Enter description here ...
+	 * @param unknown_type $namespace
 	 * @param unknown_type $path
 	 */
-	public static function addViewPath ($path) {
-		Core::$paths['views'][] = $path;
+	public static function addViewPath ($namespace, $path) {
+		Core::$paths['views'][$namespace] = $path;
 	}
 	/**
 	 * 
 	 * Enter description here ...
+	 * @param unknown_type $namespace
 	 * @param unknown_type $path
 	 */
-	public static function addLibPath ($path) {
-		Core::$paths['libs'][] = $path;
+	public static function addLibPath ($namespace, $path) {
+		Core::$paths['libs'][$namespace] = $path;
 	}
 	/**
 	 * 
 	 * Enter description here ...
-	 * @param $path
+	 * @param unknown_type $namespace
+	 * @param unknown_type $path
 	 */
-	public static function addDaoPath ($path) {
-		Core::$paths['daos'][] = $path;
+	public static function addDaoPath ($namespace, $path) {
+		Core::$paths['daos'][$namespace] = $path;
 	}
 	/**
 	 * 
@@ -134,7 +121,7 @@ class Devmo {
 	 * @param unknown_type $controller
 	 */
 	public static function setRequestedController ($controller) {
-		Core::$requestedController = $controller;
+		Core::$requestedController = Core::$namespace.preg_replace(array('=/=','=\.([^\.]+)$='),array('.','.controllers.\1'),$controller);
 	}
 	/**
 	 * 
@@ -252,7 +239,5 @@ class Devmo {
 
 // set defaults
 Devmo::setDebug(false);
+Devmo::addAppNamespace('Devmo',DEVMO_DIR);
 Devmo::setLog('../log/'.strtolower(Devmo::getServer('HTTP_HOST')).'.log');
-Devmo::setAppPath('../app');
-Devmo::setRequestedController(Devmo::getServer('PATH_INFO'));
-Devmo::setHomeController('/Home');

@@ -47,20 +47,20 @@ class Exception extends \LogicException {
 
 
 class CoreException extends \Devmo\libs\Exception {
-  public $controller;
+  public $error;
   public $tokens;
 
 
-  public function __construct ($controller=null,$tokens=null) {
-    $this->controller = $controller;
+  public function __construct ($error=null, $tokens=null) {
+    $this->error = $error;
     $this->tokens = $tokens ? $tokens : array();
-    $this->tokens['controller'] = $controller;
-    parent::__construct("DevmoCoreException:{$controller}");
+    $this->tokens['error'] = $error;
+    parent::__construct("DevmoCoreException:{$error}");
   }
   
 
   public function __toString () {
-    $info = "Controller:{$this->controller}";
+    $info = "Error:{$this->error}";
     foreach ($this->tokens as $k=>$v)
       if ($v!=null)
         $info .= " ".ucfirst($k).":{$v}";

@@ -23,7 +23,13 @@ class Core {
 	 * Enter description here ...
 	 * @var unknown_type
 	 */
-	public static $paths = array('controllers'=>array(),'views'=>array(),'libs'=>array(),'daos'=>array(),'dtos'=>array());
+	public static $namespace = null;
+	/**
+	 * 
+	 * Enter description here ...
+	 * @var unknown_type
+	 */
+	public static $namespaces = array('controllers'=>array(),'views'=>array(),'libs'=>array(),'daos'=>array(),'dtos'=>array());
 	/**
 	 * 
 	 * Enter description here ...
@@ -48,12 +54,6 @@ class Core {
 	 * @var unknown_type
 	 */
 	public static $requestedController = null;
-	/**
-	 * 
-	 * Enter description here ...
-	 * @var unknown_type
-	 */
-	public static $namespace = null;
 	/**
 	 * 
 	 * Enter description here ...
@@ -127,41 +127,34 @@ class Core {
 	public static function getFileBox ($name) {
 		preg_match('/^(.*?)([^\.]+)\.([^\.]+)$/',$name,$matches);
 		// find context
-		$context = null;
-		if (!empty($matches[1]))
-			$context = substr($matches[1],0,-1).'.';
+		$context = Devmo::getValue(1,$matches);
 		// define type
 		if (!isset($matches[2]) || !isset(self::$folders[$matches[2]]))
-			throw new \Devmo\libs\Exception("Unknown File Type:".\Devmo::getValue(2,$matches));
+			throw new \Devmo\libs\Exception((($fileType = Devmo::getValue(2,$matches))?"unknown file type:{$fileType}":"missing file type")." for:{$name}"." (types:".implode(',',array_keys(self::$folders)).")");
 		$type = $matches[2];
-		// format name
-		$name = preg_replace('/[ _-]+/','',ucwords($matches[3]));
-		// put it together
-		$subPath = str_replace('.','/','/'.$context.self::$folders[$type]).'/'.$name.'.php';
 		// find it
 		$file = null;
-		foreach (self::$paths[$type] as $path) {
-			$file = $path.$subPath;
-			if (is_file($file)) {
-				break;
+		$class = null;
+		// put it together
+		foreach (self::$namespaces[$type] as $namespace=>$path) {
+			if (preg_match("/^{$namespace}/",$context)>0) {
+				$xName = preg_replace('/[ _-]+/','',ucwords($matches[3])); 
+				$xFolder = ($namespace=='Devmo'?$type:self::$folders[$type]);
+				$xPath = preg_replace("/^{$namespace}/",$path,str_replace('.','/',$context));
+				$xFile = $xPath.$xFolder.'/'.$xName.'.php';
+				if (is_file($xFile)) {
+					$file = $xFile;
+					$class = str_replace('.','\\','\\'.$context.$type.'\\'.$xName);
+					break;
+				}
 			}
 		}
-		//  check framwork core
-		$devmoFile = null;
-		if (!is_file($file)) {
-			$devmoFile = DEVMO_DIR.'/'.$type.'/'.$name.'.php';
-			if (is_file($devmoFile)) {
-				$file = $devmoFile;
-			} else {
-				throw new CoreException('/FileNotFound',array('file'=>$file));
-			}
-		}
+		if ($file==null)
+			throw new CoreException('FileNotFound',array('request'=>$name));
 		// return file box
 		$box = new Box;
 		$box->type = $type;
-		$box->class = ($devmoFile
-			? '\Devmo\\'.$type.'\\'.$name
-			: str_replace('.','\\',self::$namespace.'\\'.$context.$type.'\\'.$name));
+		$box->class = $class;
 		$box->file = $file;
 		$box->context = $context;
 		return $box;
