@@ -121,7 +121,8 @@ class Devmo {
 	 * @param unknown_type $controller
 	 */
 	public static function setRequestedController ($controller) {
-		Core::$requestedController = Core::$namespace.preg_replace(array('=/=','=\.([^\.]+)$='),array('.','.controllers.\1'),$controller);
+		if ($controller)
+			Core::$requestedController = Core::$namespace.preg_replace(array('=/=','=\.([^\.]+)$='),array('.','.controllers.\1'),$controller);
 	}
 	/**
 	 * 
