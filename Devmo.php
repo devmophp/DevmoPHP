@@ -3,7 +3,6 @@
 define('DEVMO_DIR',preg_replace('=^(.+)/[^/]+$=','\1',__FILE__));
 require(DEVMO_DIR."/libs/Core.php");
 require(DEVMO_DIR."/libs/Exception.php");
-require(DEVMO_DIR."/libs/Deprecated.php");
 
 use \Devmo\libs\Core;
 use \Devmo\libs\Logger;
@@ -18,6 +17,7 @@ use \Devmo\libs\CoreException;
  * @version 1.0
  */
 class Devmo {
+	private static $pageNotFoundController = 'Devmo.controllers.FourOFour';
 	/**
 	 * 
 	 * Enter description here ...
@@ -32,7 +32,7 @@ class Devmo {
 				$controller->setData($e->tokens);
 				return $controller->run();
 			} else {
-				return Core::execute('Devmo.controllers.FourOFour')->getRoot();
+				return Core::execute(self::$pageNotFoundController)->getRoot();
 			}
 		}
 	}
@@ -41,7 +41,7 @@ class Devmo {
 	 * Enter description here ...
 	 * @param unknown_type $path
 	 */
-	public static function addAppNamespace ($namespace, $path, $default=false) {
+	public static function addAppPath ($namespace, $path, $default=false) {
 		foreach (Core::$namespaces as $k=>$v)
 			Core::$namespaces[$k][$namespace] = $path;
 		if ($default || Core::$namespace==null)
@@ -53,7 +53,7 @@ class Devmo {
 	 * @param unknown_type $namespace
 	 * @param unknown_type $path
 	 */
-	public static function addControllerNamespace ($namespace, $path) {
+	public static function addControllerPath ($namespace, $path) {
 		Core::$paths['controllers'][$namespace] = $path;
 	}
 	/**
@@ -114,6 +114,14 @@ class Devmo {
 	 */
 	public static function setHomeController ($controller) {
 		Core::$homeController = $controller;
+	}
+	/**
+	 * 
+	 * Enter description here ...
+	 * @param unknown_type $controller
+	 */
+	public static function setPageNotFoundController ($controller) {
+		self::$pageNotFoundController = $controller;
 	}
 	/**
 	 * 
@@ -240,5 +248,5 @@ class Devmo {
 
 // set defaults
 Devmo::setDebug(false);
-Devmo::addAppNamespace('Devmo',DEVMO_DIR);
+Devmo::addAppPath('Devmo',DEVMO_DIR);
 Devmo::setLog('../log/'.strtolower(Devmo::getServer('HTTP_HOST')).'.log');
