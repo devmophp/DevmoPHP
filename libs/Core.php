@@ -224,7 +224,7 @@ class Core {
 	 * Enter description here ...
 	 * @param Exception $e
 	 */
-	public static function handleException (Exception $e) {
+	public static function handleException (\Exception $e) {
 		self::$debug
 			? Devmo::debug($e->__toString(),'log entry')
 			: Devmo::debug($e->getMessage(),'See the error log for more details');

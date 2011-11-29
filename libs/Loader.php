@@ -1,5 +1,6 @@
 <?php
 namespace Devmo\libs;
+use Devmo\libs\Core;
 
 class Loader {
 	private $context = null;
@@ -36,20 +37,12 @@ class Loader {
   	return $view;
   }
 
-  protected function getController ($controller) {
-  	return \Devmo::getController($this->addContextToPath($controller));
+  protected function get ($name, $option='auto') {
+  	return Core::getObject($name);
   }
 
   protected function runController ($controller, $data=null) {
-  	return \Devmo\libs\Core::execute($this->addContextToPath($controller),$data);
-  }
-
-  protected function getDao ($dao) {
-  	return \Devmo::getDao($this->addContextToPath($dao));
-  }
-
-  protected function getLibrary ($library, $option='auto') {
-  	return \Devmo::getLibrary($this->addContextToPath($library),$option);
+  	return Core::execute($controller,$data);
   }
 
 }
