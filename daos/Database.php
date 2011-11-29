@@ -55,7 +55,7 @@ class Database extends Dao {
 	protected function connect () {
 		if (!DatabaseBox::getDbh($this->dbk)) {
 			$mysqli = new \mysqli($this->host,$this->user,$this->pass,$this->name);
-			if (!($mysqli instanceof mysqli))
+			if (!($mysqli instanceof \mysqli))
 				throw new Exception('Could not connect to the database');
 			DatabaseBox::setDbh($this->dbk,$mysqli);
 		}
