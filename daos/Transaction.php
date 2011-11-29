@@ -1,5 +1,6 @@
 <?php
-abstract class TransactionDao extends DatabaseDao {
+namespace Devmo\daos;
+abstract class Transaction extends Database {
 	public function begin() {
 		if ($dbh = DatabaseBox::getDbh($this->dbk)) {
 			$dbh->autocommit(false);
@@ -24,7 +25,7 @@ abstract class TransactionDao extends DatabaseDao {
 				$this->begin();
 				$result = ($callback() ?: true);
 				$this->commit();
-			} catch (Exception $e) {
+			} catch (\Exception $e) {
 				$this->rollback();
 				throw $e;
 			}

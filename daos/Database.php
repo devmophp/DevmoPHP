@@ -1,4 +1,8 @@
 <?php
+namespace Devmo\daos;
+
+use \Exception;
+use \Devmo\libs\InvalidException;
 /**
  * Common gateway for database queries and tools.
  *
@@ -6,7 +10,7 @@
  * @author Dan Wager
  * @version 1.0
  */
-class DatabaseDao extends Dao {
+class Database extends Dao {
 	private $host;
 	private $name;
 	private $user;
@@ -50,7 +54,7 @@ class DatabaseDao extends Dao {
 	 */
 	protected function connect () {
 		if (!DatabaseBox::getDbh($this->dbk)) {
-			$mysqli = new mysqli($this->host,$this->user,$this->pass,$this->name);
+			$mysqli = new \mysqli($this->host,$this->user,$this->pass,$this->name);
 			if (!($mysqli instanceof mysqli))
 				throw new Exception('Could not connect to the database');
 			DatabaseBox::setDbh($this->dbk,$mysqli);
@@ -188,12 +192,12 @@ class DatabaseBox {
 
 
 
-class ResultSetDatabaseDao implements Iterator, Countable {
+class ResultSetDatabaseDao implements \Iterator, \Countable {
 	private $result = null;
 	private $position = 0;
 
 	public function __construct ($result) {
-		if (!($result instanceof mysqli_result))
+		if (!($result instanceof \mysqli_result))
 			throw new InvalidDevmoException('DB Query Resource',$dbResource);
 		$this->result = $result;
 		$this->position = 0;
