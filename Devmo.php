@@ -128,8 +128,8 @@ class Devmo {
 	 * Enter description here ...
 	 * @param unknown_type $controller
 	 */
-	public static function setRequestedController ($controller) {
-		if ($controller)
+	public static function setRequestedController ($controller=null) {
+		if ($controller && $controller!='/')
 			Core::$requestedController = Core::$namespace.preg_replace(array('=/=','=\.([^\.]+)$='),array('.','.controllers.\1'),$controller);
 	}
 	/**
@@ -247,6 +247,7 @@ class Devmo {
 }
 
 // set defaults
-Devmo::setDebug(false);
 Devmo::addAppPath('Devmo',DEVMO_DIR);
+Devmo::setDebug(false);
 Devmo::setLog('../log/'.strtolower(Devmo::getServer('HTTP_HOST')).'.log');
+Devmo::setRequestedController(Devmo::getServer('PATH_INFO'));
