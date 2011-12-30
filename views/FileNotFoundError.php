@@ -1,1 +1,2 @@
-Missing File: <?php echo $this->request ?>
+<h2>File Not Found</h2>
+<?=$this->request?>

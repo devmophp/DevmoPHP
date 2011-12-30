@@ -38,6 +38,10 @@ class Loader {
   }
 
   protected function get ($name, $option='auto') {
+		if (substr($name,0,1)=='.') {
+    	$reflector = new \ReflectionClass(get_class($this));
+    	$name = str_replace('\\','.',$reflector->getNamespaceName()).$name;
+		}
   	return Core::getObject($name);
   }
 

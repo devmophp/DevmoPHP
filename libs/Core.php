@@ -5,62 +5,16 @@ use \Devmo\libs\CoreException;
 use \Devmo\libs\InvalidException;
 use \Devmo;
 
-/**
- * 
- * Enter description here ...
- * @author jschreckengost
- *
- */
 class Core {
-	/**
-	 * 
-	 * Enter description here ...
-	 * @var unknown_type
-	 */
 	public static $debug = false;
-	/**
-	 * 
-	 * Enter description here ...
-	 * @var unknown_type
-	 */
 	public static $namespace = null;
-	/**
-	 * 
-	 * Enter description here ...
-	 * @var unknown_type
-	 */
 	public static $namespaces = array('controllers'=>array(),'views'=>array(),'libs'=>array(),'daos'=>array(),'dtos'=>array());
-	/**
-	 * 
-	 * Enter description here ...
-	 * @var unknown_type
-	 */
 	public static $folders = array('controllers'=>'_controllers','views'=>'_views','libs'=>'_libs','daos'=>'_daos','dtos'=>'_dtos');
-	/**
-	 * 
-	 * Enter description here ...
-	 * @var unknown_type
-	 */
 	public static $mappings = array();
-	/**
-	 * 
-	 * Enter description here ...
-	 * @var unknown_type
-	 */
 	public static $homeController = null;
-	/**
-	 * 
-	 * Enter description here ...
-	 * @var unknown_type
-	 */
 	public static $requestedController = null;
-	/**
-	 * 
-	 * Enter description here ...
-	 * @param unknown_type $name
-	 * @param unknown_type $data
-	 * @throws CoreException
-	 */
+
+
 	public static function execute ($name=false, $data=null) {
 		// find controller
 		if (!($controller = $name) && self::$requestedController) {
@@ -71,17 +25,11 @@ class Core {
 		}
 		//	get controller view
 		if (!$view = self::executeController($controller,$data))
-			throw new CoreException('ViewNotFound',array('controller'=>'?'));
+			throw new CoreException('ViewNotFound',array('controller'=>$controller));
 		return $view;
 	}
-	/**
-	 * 
-	 * Enter description here ...
-	 * @param unknown_type $path
-	 * @param unknown_type $data
-	 * @param unknown_type $message
-	 * @throws DevmoException
-	 */
+
+
 	private static function executeController ($path, $data=null, $message=null) {
 		// find mapped controller
 		if (self::$mappings) {
@@ -117,13 +65,8 @@ class Core {
 			return $view;
 		}
 	}
-	/**
-	 * 
-	 * Enter description here ...
-	 * @param unknown_type $name
-	 * @throws \Devmo\libs\Exception
-	 * @throws CoreException
-	 */
+
+
 	public static function getFileBox ($name) {
 		preg_match('/^(.*?)([^\.]+)\.([^\.]+)$/',$name,$matches);
 		// find context
@@ -149,8 +92,10 @@ class Core {
 				}
 			}
 		}
+		if ($xFile==null)
+			throw new CoreException('NamespaceNotDefined',array('name'=>$name,'namespaces'=>self::$namespaces[$type]));
 		if ($file==null)
-			throw new CoreException('FileNotFound',array('request'=>$name));
+			throw new CoreException('FileNotFound',array('request'=>$xFile));
 		// return file box
 		$box = new Box;
 		$box->type = $type;
@@ -159,13 +104,8 @@ class Core {
 		$box->context = $context;
 		return $box;
 	}
-	/**
-	 * 
-	 * Enter description here ...
-	 * @param unknown_type $path
-	 * @param unknown_type $option
-	 * @throws CoreException
-	 */
+
+
 	public static function getObject ($path, $option='auto') {
 		$file = self::getFileBox($path);
 		require_once($file->file);
@@ -208,22 +148,16 @@ class Core {
 			$obj->setFileBox($file);
 		return $obj;
 	}
-	/**
-	 * 
-	 * Enter description here ...
-	 * @param unknown_type $hash
-	 */
+
+
 	public static function sanitize (&$hash) {
 		foreach ($hash as $k=>$v)
 			is_array($v)
 				? self::sanitize($v)
 				: $hash[$k] = htmlentities(trim($v),ENT_NOQUOTES);
 	}
-	/**
-	 * 
-	 * Enter description here ...
-	 * @param Exception $e
-	 */
+
+
 	public static function handleException (\Exception $e) {
 		self::$debug
 			? Devmo::debug($e->__toString(),'log entry')
@@ -231,11 +165,20 @@ class Core {
 		if (!Logger::add($e->__toString()))
 			Devmo::debug(null,'Could not log error');
 	}
-	/**
-	 * 
-	 * Enter description here ...
-	 * @param unknown_type $class
-	 */
+
+
+	public static function handleCoreException (CoreException $e, $pageNotFoundController) {
+		if (self::$debug) {
+			$controller = self::getObject('Devmo.controllers.Error','new');
+			$controller->setException($e);
+			$controller->setData($e->tokens);
+			return $controller->run();
+		} else {
+			return self::execute($pageNotFoundController)->getRoot();
+		}
+	}
+	
+	
 	public static function loadClass ($class) {
 		if (strstr($class,'\\'))
 			$class = str_replace(array('/','\\'),'.',$class);
@@ -244,40 +187,31 @@ class Core {
 
 }
 
-/**
- * 
- * Enter description here ...
- * @author jschreckengost
- *
- */
+
+
+
 class Box {
-	/**
-	 * 
-	 * Enter description here ...
-	 * @var unknown_type
-	 */
-	protected $devmoBoxData = array();
-	/**
-	 * 
-	 * Enter description here ...
-	 * @param unknown_type $name
-	 * @param unknown_type $value
-	 * @throws InvalidException
-	 */
+
+
 	public function __set ($name, $value) {
-		if (empty($name))
-			throw new InvalidException('Data Key',$name);
-		$this->devmoBoxData[$name] = $value;
+		$setter = 'set'.ucfirst($name);
+    return $name && method_exists($this,$setter)
+			? $this->$setter($name,$value)
+			: $this->{$name} = $value;
 	}
-	/**
-	 * 
-	 * Enter description here ...
-	 * @param unknown_type $name
-	 */
+
+
 	public function __get ($name) {
-		return Devmo::getValue($name,$this->devmoBoxData);
+		$getter = 'get'.ucfirst($name);
+    return $name && method_exists($this,$getter)
+			? $this->$getter()
+			: Devmo::getValue($name,$this);
 	}
+
 }
+
+
+
 
 // check for magic quotes
 if (get_magic_quotes_gpc())

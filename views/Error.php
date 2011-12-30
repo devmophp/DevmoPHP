@@ -1,5 +1,27 @@
-<div style="width:50%;margin:50px auto;text-align:center">
-  <p style="font:bold 15px arial;color:#660000">Problem!</p>
-  <p style="font:bold 11px arial;color:#660000"><?php echo $this->body ?></p>
-  <p><pre style="font:normal 10px arial;color:#660000;text-align:left;"><?=$this->trace?></pre></p>
+<style>
+h1,h2 {
+	font: bold 15px arial;
+	color: #660000;
+}
+h2 {
+	font-size: 13px;
+}
+div, p, li, td, pre, label {
+	font: normal 12px arial;
+	color: #660000;
+}
+label {
+	font-size: 11px;
+	font-weight: bold;
+	padding-right: 5px;
+}
+</style>
+<div style="width:50%;margin:50px auto 0px auto;text-align:center">
+  <h1>Problem!</h1>
+  <p><?php echo $this->body ?></p>
+</div>
+<div style="padding:15px;">
+ 	<pre style="font-size: 10px;">
+ 		<?=$this->trace?>
+ 	</pre>
 </div>

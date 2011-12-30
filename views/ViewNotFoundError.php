@@ -1,1 +1,2 @@
-No view returned by <?php echo $this->getToken('controller') ?>
+<h2>Return Object Not View</h2>
+<label>controller:</label><?=$this->getToken('controller')?>

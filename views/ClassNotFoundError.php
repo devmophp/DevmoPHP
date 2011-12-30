@@ -1,2 +1,4 @@
-Class Not Found: <?php echo $this->getToken('class') ?>
-<br />In File: <?php echo $this->getToken('file') ?>
+<h2>Class Not Found</h2>
+<label>class:</label><?=$this->getToken('class')?>
+<br />
+<label>file:</label><?=$this->getToken('file')?>
