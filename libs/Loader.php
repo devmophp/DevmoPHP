@@ -1,6 +1,8 @@
 <?php
 namespace Devmo\libs;
 use Devmo\libs\Core;
+use Devmo\libs\CoreException;
+use Devmo\controllers\Controller;
 
 class Loader {
 	private $context = null;
@@ -23,13 +25,25 @@ class Loader {
   		? $this->context.$path
   		: $path;
   }
+	
+  protected function runController ($path, $data=null) {
+  	return Core::execute(Core::formatPath($path,'controllers'),$data);
+  }
 
-  protected function getView ($template=null, $tokens=null) {
-  	if (!$template)
-  		$template = basename(str_replace('\\','/',$this->fileBox->class));
-		if (!strstr($template,'.'))
-			$template = $this->fileBox->context.'views.'.$template;
-		$fileBox = Core::getFileBox($template);
+  protected function get ($path, $option='auto') {
+  	return Core::getObject($path,$option);
+  }
+
+	protected function getController ($path) {
+		return $this->get(Core::formatPath($path,'controllers',$this->fileBox->context));
+	}
+
+  protected function getView ($path=null, $tokens=null) {
+  	if (!($this instanceof Controller))
+			throw new CoreException('ClassNotController',array('class'=>$this->fileBox->class,'file'=>$this->fileBox->file));
+  	if (!$path)
+  		$path = basename(str_replace('\\','/',$this->fileBox->class));
+		$fileBox = Core::getFileBox(Core::formatPath($path,'views',$this->fileBox->context));
 		$view = new \Devmo\libs\View();
 		$view->setTemplate($fileBox->file);
 		if ($tokens)
@@ -37,16 +51,16 @@ class Loader {
   	return $view;
   }
 
-  protected function get ($name, $option='auto') {
-		if (substr($name,0,1)=='.') {
-    	$reflector = new \ReflectionClass(get_class($this));
-    	$name = str_replace('\\','.',$reflector->getNamespaceName()).$name;
-		}
-  	return Core::getObject($name);
-  }
+	protected function getDao ($path) {
+		return $this->get(Core::formatPath($path,'daos',$this->fileBox->context));
+	}
 
-  protected function runController ($controller, $data=null) {
-  	return Core::execute($controller,$data);
-  }
+	protected function getDto ($path) {
+		return $this->get(Core::formatPath($path,'dtos',$this->fileBox->context));
+	}
+
+	protected function getLibrary ($path) {
+		return $this->get(Core::formatPath($path,'libs',$this->fileBox->context));
+	}
 
 }

@@ -65,12 +65,12 @@ class Devmo {
 
 
 	public static function setHomeController ($controller) {
-		Core::$homeController = $controller;
+		Core::$homeController = Core::formatPath($controller,'controllers');
 	}
 
 
 	public static function setPageNotFoundController ($controller) {
-		self::$pageNotFoundController = $controller;
+		self::$pageNotFoundController = Core::formatPath($controller,'controllers');
 	}
 
 
@@ -97,18 +97,24 @@ class Devmo {
 	}
 
 
-	public static function getGet ($name) {
-		return self::getValue($name,$_GET);
+	public static function getGet ($name, $makeSafe=true) {
+		return (($value = self::getValue($name,$_GET)) && $makeSafe)
+			? Core::makeSafe($value)
+			: $value;
 	}
 
 
 	public static function getPost ($name) {
-		return self::getValue($name,$_POST);
+		return (($value = self::getValue($name,$_POST)) && $makeSafe)
+			? Core::makeSafe($value)
+			: $value;
 	}
 
 
 	public static function getRequest ($name) {
-		return self::getValue($name,$_REQUEST);
+		return (($value = self::getValue($name,$_REQUEST)) && $makeSafe)
+			? Core::makeSafe($value)
+			: $value;
 	}
 
 

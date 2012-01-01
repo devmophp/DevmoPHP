@@ -40,7 +40,6 @@ class Database extends Dao {
 		$this->user = $user;
 		$this->pass = $pass;
 		$this->dbk = $this->host.$this->name;
-		$this->connect();
 	}
 
 
@@ -91,7 +90,7 @@ class Database extends Dao {
 		$dbh = DatabaseBox::getDbh($this->dbk);
 		if (!$result = $dbh->query($sql))
 			throw new DevmoException('Error Querying Database: '.$dbh->errno.':'.$dbh->error.":\n".preg_replace('=\s+=',' ',$sql));
-		if ($result instanceof mysqli_result)
+		if ($result instanceof \mysqli_result)
 			return new ResultSetDatabaseDao($result);
 		if ($returnNewId)
 			return DatabaseBox::getDbh($this->dbk)->insert_id;

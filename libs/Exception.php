@@ -53,7 +53,7 @@ class CoreException extends \Devmo\libs\Exception {
 
   public function __construct ($name=null, $tokens=null) {
     $this->name = $name;
-    $this->tokens = $tokens ? $tokens : array();
+    $this->tokens = is_array($tokens) ? $tokens : array();
     parent::__construct("DevmoCoreException::{$name}");
   }
   
@@ -61,8 +61,7 @@ class CoreException extends \Devmo\libs\Exception {
   public function __toString () {
     $info = "";
     foreach ($this->tokens as $k=>$v)
-      if ($v!=null)
-        $info .= " ".ucfirst($k).":{$v}";
+	    $info .= ucfirst($k).":{$v} ";
 		parent::setInfo($info);
     return parent::__toString();
   }

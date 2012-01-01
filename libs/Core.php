@@ -143,18 +143,23 @@ class Core {
 				break;
 		}
 		if ($parentClass && !($obj instanceof $parentClass))
-			throw new CoreException('ClassNotController',array('class'=>$file->getClass(),'file'=>$file->getFile()));
+			throw new CoreException('ClassNotController',array('class'=>$file->class,'file'=>$file->file));
 		if (($obj instanceof Loader))
 			$obj->setFileBox($file);
 		return $obj;
 	}
 
 
-	public static function sanitize (&$hash) {
+	public static function makeSafe ($value) {
+		if (is_array($value))
+			self::makeSafeSub($value);
+		return htmlentities(trim($value),ENT_NOQUOTES);
+	}
+	private static function makeSafeSub (&$hash) {
 		foreach ($hash as $k=>$v)
 			is_array($v)
-				? self::sanitize($v)
-				: $hash[$k] = htmlentities(trim($v),ENT_NOQUOTES);
+				? self::makeSafeSub($v)
+				: $hash[$k] = self::makeSafe($v);
 	}
 
 
@@ -185,13 +190,21 @@ class Core {
 		self::getObject($class,'load');
 	}
 
+
+	public static function formatPath ($path, $type, $context=null) {
+		if ($context && !strstr($path,'.'))
+			$path = $context.$path;
+		return !strstr($path,".{$type}.")
+			? preg_replace('=(.*?)([a-zA-Z0-9]+)$=','\1'.$type.'.\2',$path)
+			: $path;
+	}
+	
 }
 
 
 
 
 class Box {
-
 
 	public function __set ($name, $value) {
 		$setter = 'set'.ucfirst($name);
@@ -219,7 +232,3 @@ if (get_magic_quotes_gpc())
 // set default exception handler
 set_exception_handler(array('\Devmo\libs\Core','handleException'));
 spl_autoload_register(array('\Devmo\libs\Core','loadClass'));
-// sanitize data
-Core::sanitize($_GET);
-Core::sanitize($_POST);
-Core::sanitize($_REQUEST);
