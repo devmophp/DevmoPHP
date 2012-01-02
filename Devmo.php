@@ -21,7 +21,7 @@ class Devmo {
 	}
 
 
-	public static function addAppPath ($namespace, $path, $default=false) {
+	public static function addNamespace ($namespace, $path, $default=false) {
 		foreach (Core::$namespaces as $k=>$v)
 			Core::$namespaces[$k][$namespace] = $path;
 		if ($default || Core::$namespace==null)
@@ -165,7 +165,7 @@ class Devmo {
 }
 
 // set defaults
-Devmo::addAppPath('devmo',DEVMO_DIR);
+Devmo::addNamespace('devmo',DEVMO_DIR);
 Devmo::setDebug(false);
 Devmo::setLog('../log/'.strtolower(Devmo::getServer('HTTP_HOST')).'.log');
 Devmo::setRequestedController(Devmo::getServer('PATH_INFO'));
