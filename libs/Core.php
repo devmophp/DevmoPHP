@@ -1,9 +1,9 @@
 <?php
-namespace Devmo\libs;
+namespace devmo\libs;
 
-use \Devmo\libs\CoreException;
-use \Devmo\libs\InvalidException;
-use \Devmo;
+use \devmo\libs\CoreException;
+use \devmo\libs\InvalidException;
+use \devmo;
 
 class Core {
 	public static $debug = false;
@@ -73,7 +73,7 @@ class Core {
 		$context = Devmo::getValue(1,$matches);
 		// define type
 		if (!isset($matches[2]) || !isset(self::$folders[$matches[2]]))
-			throw new \Devmo\libs\Exception((($fileType = Devmo::getValue(2,$matches))?"unknown file type:{$fileType}":"missing file type")." for:{$name}"." (types:".implode(',',array_keys(self::$folders)).")");
+			throw new \devmo\libs\Exception((($fileType = Devmo::getValue(2,$matches))?"unknown file type:{$fileType}":"missing file type")." for:{$name}"." (types:".implode(',',array_keys(self::$folders)).")");
 		$type = $matches[2];
 		// find it
 		$file = null;
@@ -82,7 +82,7 @@ class Core {
 		foreach (self::$namespaces[$type] as $namespace=>$path) {
 			if (preg_match("/^{$namespace}/",$context)>0) {
 				$xName = preg_replace('/[ _-]+/','',ucwords($matches[3])); 
-				$xFolder = ($namespace=='Devmo'?$type:self::$folders[$type]);
+				$xFolder = ($namespace=='devmo'?$type:self::$folders[$type]);
 				$xPath = preg_replace("/^{$namespace}/",$path,str_replace('.','/',$context));
 				$xFile = $xPath.$xFolder.'/'.$xName.'.php';
 				if (is_file($xFile)) {
@@ -119,10 +119,10 @@ class Core {
 		//  check for parent class
 		$parentClass = null;
 		switch ($file->type) {
-			case 'controllers': $parentClass = '\Devmo\controllers\Controller'; break;
-			case 'views': $parentClass = '\Devmo\libs\View'; break;
-			case 'daos': $parentClass = '\Devmo\daos\Dao'; break;
-			case 'dtos': $parentClass = '\Devmo\dtos\Dto'; break;
+			case 'controllers': $parentClass = '\devmo\controllers\Controller'; break;
+			case 'views': $parentClass = '\devmo\libs\View'; break;
+			case 'daos': $parentClass = '\devmo\daos\Dao'; break;
+			case 'dtos': $parentClass = '\devmo\dtos\Dto'; break;
 		}
 		if ($parentClass && !class_exists($parentClass))
 			throw new CoreException('ClassNotFound',array('class'=>$parentClass,'file'=>$file->file));
@@ -174,7 +174,7 @@ class Core {
 
 	public static function handleCoreException (CoreException $e, $pageNotFoundController) {
 		if (self::$debug) {
-			$controller = self::getObject('Devmo.controllers.Error','new');
+			$controller = self::getObject('devmo.controllers.Error','new');
 			$controller->setException($e);
 			$controller->setData($e->tokens);
 			return $controller->run();
@@ -230,5 +230,5 @@ class Box {
 if (get_magic_quotes_gpc())
 	die("Magic Quotes Config is On... exiting.");
 // set default exception handler
-set_exception_handler(array('\Devmo\libs\Core','handleException'));
-spl_autoload_register(array('\Devmo\libs\Core','loadClass'));
+set_exception_handler(array('\devmo\libs\Core','handleException'));
+spl_autoload_register(array('\devmo\libs\Core','loadClass'));

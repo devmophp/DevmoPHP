@@ -1,5 +1,5 @@
 <?php
-namespace Devmo\libs;
+namespace devmo\libs;
 use Devmo\libs\Core;
 use Devmo\libs\CoreException;
 use Devmo\controllers\Controller;
@@ -8,7 +8,7 @@ class Loader {
 	private $context = null;
 	private $fileBox = null;
 
-  public function setFileBox (\Devmo\libs\Box $fileBox) {
+  public function setFileBox (\devmo\libs\Box $fileBox) {
   	$this->fileBox = $fileBox;
   }
 
@@ -44,7 +44,7 @@ class Loader {
   	if (!$path)
   		$path = basename(str_replace('\\','/',$this->fileBox->class));
 		$fileBox = Core::getFileBox(Core::formatPath($path,'views',$this->fileBox->context));
-		$view = new \Devmo\libs\View();
+		$view = new \devmo\libs\View();
 		$view->setTemplate($fileBox->file);
 		if ($tokens)
 			$view->setTokens($tokens);

@@ -1,7 +1,9 @@
 <?php
-namespace Devmo\controllers;
+namespace devmo\controllers;
 
-abstract class Controller extends \Devmo\libs\Loader {
+use \devmo\libs\Exception as DevmoException;
+
+abstract class Controller extends \devmo\libs\Loader {
   protected $success = null;
   protected $failure = null;
   protected $forward = null;

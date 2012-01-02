@@ -8,9 +8,9 @@
  * @copyright Copyright (c) 2007 Devmo
  * @version 1.0
  */
-namespace Devmo\libs;
+namespace devmo\libs;
 
-class View extends \Devmo\libs\Box {
+class View extends \devmo\libs\Box {
 	private $parent;	//	ref to parent view object
 	private $template;	//	str	template file
 

@@ -1,4 +1,4 @@
 <?php
-namespace Devmo\daos;
+namespace devmo\daos;
 
 abstract class Dao {}

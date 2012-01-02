@@ -7,8 +7,8 @@
  * @copyright Copyright (c) 2007 Devmo
  * @version 1.0
  */
-namespace Devmo\controllers;
-class FourOFour extends \Devmo\controllers\Controller {
+namespace devmo\controllers;
+class FourOFour extends \devmo\controllers\Controller {
 
   public function run () {
   	header("HTTP/1.0 404 Not Found");

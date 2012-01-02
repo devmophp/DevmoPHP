@@ -4,12 +4,12 @@ define('DEVMO_DIR',preg_replace('=^(.+)/[^/]+$=','\1',__FILE__));
 require(DEVMO_DIR."/libs/Core.php");
 require(DEVMO_DIR."/libs/Exception.php");
 
-use \Devmo\libs\Core;
-use \Devmo\libs\Logger;
-use \Devmo\libs\CoreException;
+use \devmo\libs\Core;
+use \devmo\libs\Logger;
+use \devmo\libs\CoreException;
 
 class Devmo {
-	private static $pageNotFoundController = 'Devmo.controllers.FourOFour';
+	private static $pageNotFoundController = 'devmo.controllers.FourOFour';
 
 
 	public static function run () {
@@ -165,7 +165,7 @@ class Devmo {
 }
 
 // set defaults
-Devmo::addAppPath('Devmo',DEVMO_DIR);
+Devmo::addAppPath('devmo',DEVMO_DIR);
 Devmo::setDebug(false);
 Devmo::setLog('../log/'.strtolower(Devmo::getServer('HTTP_HOST')).'.log');
 Devmo::setRequestedController(Devmo::getServer('PATH_INFO'));

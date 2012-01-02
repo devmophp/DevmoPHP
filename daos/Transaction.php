@@ -1,5 +1,5 @@
 <?php
-namespace Devmo\daos;
+namespace devmo\daos;
 abstract class Transaction extends Database {
 	public function begin() {
 		if ($dbh = DatabaseBox::getDbh($this->dbk)) {

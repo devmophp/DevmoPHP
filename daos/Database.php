@@ -1,8 +1,8 @@
 <?php
-namespace Devmo\daos;
+namespace devmo\daos;
 
 use \Exception;
-use \Devmo\libs\InvalidException;
+use \devmo\libs\InvalidException;
 /**
  * Common gateway for database queries and tools.
  *

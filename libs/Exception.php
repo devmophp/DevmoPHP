@@ -1,5 +1,5 @@
 <?php
-namespace Devmo\libs;
+namespace devmo\libs;
 
 class Exception extends \LogicException {
   private $path;
@@ -46,7 +46,7 @@ class Exception extends \LogicException {
 }
 
 
-class CoreException extends \Devmo\libs\Exception {
+class CoreException extends \devmo\libs\Exception {
   public $name;
   public $tokens;
 
@@ -70,11 +70,11 @@ class CoreException extends \Devmo\libs\Exception {
 
 
 
-class UniqueException extends \Devmo\libs\Exception {
+class UniqueException extends \devmo\libs\Exception {
 }
 
 
-class InvalidException extends \Devmo\libs\Exception {
+class InvalidException extends \devmo\libs\Exception {
   public function __construct ($what,$value) {
     parent::__construct(($value ? "Invalid Value Found For {$what}" : "Missing Value For {$what}"));
   }
