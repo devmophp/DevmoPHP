@@ -1,5 +1,4 @@
 <?php
-use Devmo;
-namespace dtos;
+namespace devmo\dtos;
 
 abstract class Dto extends Box {}
