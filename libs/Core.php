@@ -197,6 +197,11 @@ class Core {
 			? preg_replace('=(.*?)([a-zA-Z0-9]+)$=','\1'.$type.'.\2',$path)
 			: $path;
 	}
+
+	
+	public static function formatRequestToPath ($request) {
+		return self::$namespace.preg_replace(array('=/=','=\.([^\.]+)$='),array('.','.controllers.\1'),$request);
+	}
 	
 }
 

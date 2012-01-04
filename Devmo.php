@@ -74,9 +74,9 @@ class Devmo {
 	}
 
 
-	public static function setRequestedController ($controller=null) {
-		if ($controller && $controller!='/')
-			Core::$requestedController = Core::$namespace.preg_replace(array('=/=','=\.([^\.]+)$='),array('.','.controllers.\1'),$controller);
+	public static function setRequest ($request=null) {
+		if ($request && $request!='/')
+			Core::$requestedController = Core::formatRequestToPath($request);
 	}
 
 
