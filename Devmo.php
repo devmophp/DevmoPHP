@@ -104,14 +104,14 @@ class Devmo {
 	}
 
 
-	public static function getPost ($name) {
+	public static function getPost ($name, $makeSafe=true) {
 		return (($value = self::getValue($name,$_POST)) && $makeSafe)
 			? Core::makeSafe($value)
 			: $value;
 	}
 
 
-	public static function getRequest ($name) {
+	public static function getRequest ($name, $makeSafe=true) {
 		return (($value = self::getValue($name,$_REQUEST)) && $makeSafe)
 			? Core::makeSafe($value)
 			: $value;
