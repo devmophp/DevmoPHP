@@ -40,6 +40,8 @@ class Database extends Dao {
 		$this->user = $user;
 		$this->pass = $pass;
 		$this->dbk = $this->host.$this->name;
+		if (!DatabaseBox::getDbh($this->dbk))
+			$this->connect();
 	}
 
 
@@ -85,8 +87,6 @@ class Database extends Dao {
 	 * @return void
 	 */
 	protected function query ($sql, $returnNewId=false) {
-		if (!DatabaseBox::getDbh($this->dbk))
-			$this->connect();
 		$dbh = DatabaseBox::getDbh($this->dbk);
 		if (!$result = $dbh->query($sql))
 			throw new DevmoException('Error Querying Database: '.$dbh->errno.':'.$dbh->error.":\n".preg_replace('=\s+=',' ',$sql));
