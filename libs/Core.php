@@ -76,8 +76,7 @@ class Core {
 			throw new \devmo\libs\Exception((($fileType = Devmo::getValue(2,$matches))?"unknown file type:{$fileType}":"missing file type")." for:{$name}"." (types:".implode(',',array_keys(self::$folders)).")");
 		$type = $matches[2];
 		// find it
-		$file = null;
-		$class = null;
+		$xFile = $file = $class = null;
 		// put it together
 		foreach (self::$namespaces[$type] as $namespace=>$path) {
 			if (preg_match("/^{$namespace}/",$context)>0) {
