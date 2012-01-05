@@ -7,12 +7,13 @@ use \devmo;
 
 class Core {
 	public static $debug = false;
+	public static $mappings = array();
 	public static $namespace = null;
 	public static $namespaces = array('controllers'=>array(),'views'=>array(),'libs'=>array(),'daos'=>array(),'dtos'=>array());
 	public static $folders = array('controllers'=>'_controllers','views'=>'_views','libs'=>'_libs','daos'=>'_daos','dtos'=>'_dtos');
-	public static $mappings = array();
-	public static $homeController = null;
+	public static $pageNotFoundController = 'devmo.controllers.FourOFour';
 	public static $requestedController = null;
+	public static $homeController = null;
 
 
 	public static function execute ($name=false, $data=null) {
@@ -70,10 +71,10 @@ class Core {
 	public static function getFileBox ($name) {
 		preg_match('/^(.*?)([^\.]+)\.([^\.]+)$/',$name,$matches);
 		// find context
-		$context = Devmo::getValue(1,$matches);
+		$context = self::getValue(1,$matches);
 		// define type
 		if (!isset($matches[2]) || !isset(self::$folders[$matches[2]]))
-			throw new \devmo\libs\Exception((($fileType = Devmo::getValue(2,$matches))?"unknown file type:{$fileType}":"missing file type")." for:{$name}"." (types:".implode(',',array_keys(self::$folders)).")");
+			throw new \devmo\libs\Exception((($fileType = self::getValue(2,$matches))?"unknown file type:{$fileType}":"missing file type")." for:{$name}"." (types:".implode(',',array_keys(self::$folders)).")");
 		$type = $matches[2];
 		// find it
 		$xFile = $file = $class = null;
@@ -171,14 +172,14 @@ class Core {
 	}
 
 
-	public static function handleCoreException (CoreException $e, $pageNotFoundController) {
+	public static function handleCoreException (CoreException $e) {
 		if (self::$debug) {
 			$controller = self::getObject('devmo.controllers.Error','new');
 			$controller->setException($e);
 			$controller->setData($e->tokens);
 			return $controller->run();
 		} else {
-			return self::execute($pageNotFoundController)->getRoot();
+			return self::execute(self::$pageNotFoundController)->getRoot();
 		}
 	}
 	
@@ -203,6 +204,19 @@ class Core {
 		return self::$namespace.preg_replace(array('=/=','=\.([^\.]+)$='),array('.','.controllers.\1'),$request);
 	}
 	
+
+
+	public static function getValue ($name, $mixed=null) {
+		if (is_array($mixed))
+			return isset($mixed[$name])
+				? $mixed[$name]
+				: false;
+		if (is_object($mixed))
+			return isset($mixed->{$name})
+				? $mixed->{$name}
+				: false;
+	}
+
 }
 
 
@@ -222,7 +236,7 @@ class Box {
 		$getter = 'get'.ucfirst($name);
     return $name && method_exists($this,$getter)
 			? $this->$getter()
-			: Devmo::getValue($name,$this);
+			: Core::getValue($name,$this);
 	}
 
 }

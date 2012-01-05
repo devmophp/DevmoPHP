@@ -75,5 +75,31 @@ abstract class Controller extends \devmo\libs\Loader {
   		$this->data = & $data;
   }
 
+	public function getGet ($name, $makeSafe=true) {
+		return (($value = Core::getValue($name,$_GET)) && $makeSafe)
+			? Core::makeSafe($value)
+			: $value;
+	}
+
+	public static function getPost ($name, $makeSafe=true) {
+		return (($value = Core::getValue($name,$_POST)) && $makeSafe)
+			? Core::makeSafe($value)
+			: $value;
+	}
+
+	public function getSession ($name) {
+		return Core::getValue($name,$_SESSION);
+	}
+
+	public static function getRequest ($name, $makeSafe=true) {
+		return (($value = Core::getValue($name,$_REQUEST)) && $makeSafe)
+			? Core::makeSafe($value)
+			: $value;
+	}
+
+	public static function getServer ($name) {
+		return Core::getValue($name,$_SERVER);
+	}
+
   abstract public function run ();
 }

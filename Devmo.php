@@ -9,14 +9,13 @@ use \devmo\libs\Logger;
 use \devmo\libs\CoreException;
 
 class Devmo {
-	private static $pageNotFoundController = 'devmo.controllers.FourOFour';
 
 
 	public static function run () {
 		try {
 			return Core::execute()->getRoot();
 		} catch (CoreException $e) {
-			return Core::handleCoreException($e,self::$pageNotFoundController);
+			return Core::handleCoreException($e);
 		}
 	}
 
@@ -70,7 +69,7 @@ class Devmo {
 
 
 	public static function setPageNotFoundController ($controller) {
-		self::$pageNotFoundController = Core::formatPath($controller,'controllers');
+		Core::$pageNotFoundController = Core::formatPath($controller,'controllers');
 	}
 
 
@@ -80,61 +79,8 @@ class Devmo {
 	}
 
 
-	public static function getValue ($name, $mixed=null) {
-		if (is_array($mixed))
-			return isset($mixed[$name])
-				? $mixed[$name]
-				: false;
-		if (is_object($mixed))
-			return isset($mixed->{$name})
-				? $mixed->{$name}
-				: false;
-	}
-
-
-	public static function getSession ($name) {
-		return self::getValue($name,$_SESSION);
-	}
-
-
-	public static function getGet ($name, $makeSafe=true) {
-		return (($value = self::getValue($name,$_GET)) && $makeSafe)
-			? Core::makeSafe($value)
-			: $value;
-	}
-
-
-	public static function getPost ($name, $makeSafe=true) {
-		return (($value = self::getValue($name,$_POST)) && $makeSafe)
-			? Core::makeSafe($value)
-			: $value;
-	}
-
-
-	public static function getRequest ($name, $makeSafe=true) {
-		return (($value = self::getValue($name,$_REQUEST)) && $makeSafe)
-			? Core::makeSafe($value)
-			: $value;
-	}
-
-
-	public static function getServer ($name) {
-		return self::getValue($name,$_SERVER);
-	}
-
-
 	public static function isDebug() {
 		return Core::$debug;
-	}
-
-
-	public static function getObject ($class, $option='auto') {
-		return Core::getObject($class,$option);
-	}
-
-
-	public static function loadObject ($class) {
-		return Core::getObject($class,'load');
 	}
 
 
@@ -167,5 +113,5 @@ class Devmo {
 // set defaults
 Devmo::addNamespace('devmo',DEVMO_DIR);
 Devmo::setDebug(false);
-Devmo::setLog('../log/'.strtolower(Devmo::getServer('HTTP_HOST')).'.log');
-Devmo::setRequestedController(Devmo::getServer('PATH_INFO'));
+Devmo::setLog('../log/'.strtolower(Core::getValue('HTTP_HOST',$_SERVER)).'.log');
+Devmo::setRequest(Core::getValue('PATH_INFO',$_SERVER));
