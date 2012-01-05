@@ -25,14 +25,6 @@ class Loader {
   		? $this->context.$path
   		: $path;
   }
-	
-  protected function runController ($path, $data=null) {
-  	return Core::execute(Core::formatPath($path,'controllers'),$data);
-  }
-	
-	protected function runRequest ($request) {
-		return Core::execute(Core::formatRequestToPath($request));
-	}
 
   protected function get ($path, $option='auto') {
   	return Core::getObject($path,$option);
