@@ -84,6 +84,18 @@ class Devmo {
 	}
 
 
+	public static function getValue ($name, $mixed=null) {
+		if (is_array($mixed))
+			return isset($mixed[$name])
+				? $mixed[$name]
+				: false;
+		if (is_object($mixed))
+			return isset($mixed->{$name})
+				? $mixed->{$name}
+				: false;
+	}
+
+
 	public static function debug ($obj, $text='DEBUG', $opt=FALSE) {
 		echo "<pre>\n";
 		echo "{$text}\n";
@@ -113,5 +125,5 @@ class Devmo {
 // set defaults
 Devmo::addNamespace('devmo',DEVMO_DIR);
 Devmo::setDebug(false);
-Devmo::setLog('../log/'.strtolower(Core::getValue('HTTP_HOST',$_SERVER)).'.log');
-Devmo::setRequest(Core::getValue('PATH_INFO',$_SERVER));
+Devmo::setLog('../log/'.strtolower(Devmo::getValue('HTTP_HOST',$_SERVER)).'.log');
+Devmo::setRequest(Devmo::getValue('PATH_INFO',$_SERVER));

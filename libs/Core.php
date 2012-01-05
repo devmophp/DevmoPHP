@@ -71,10 +71,10 @@ class Core {
 	public static function getFileBox ($name) {
 		preg_match('/^(.*?)([^\.]+)\.([^\.]+)$/',$name,$matches);
 		// find context
-		$context = self::getValue(1,$matches);
+		$context = Devmo::getValue(1,$matches);
 		// define type
 		if (!isset($matches[2]) || !isset(self::$folders[$matches[2]]))
-			throw new \devmo\libs\Exception((($fileType = self::getValue(2,$matches))?"unknown file type:{$fileType}":"missing file type")." for:{$name}"." (types:".implode(',',array_keys(self::$folders)).")");
+			throw new \devmo\libs\Exception((($fileType = Devmo::getValue(2,$matches))?"unknown file type:{$fileType}":"missing file type")." for:{$name}"." (types:".implode(',',array_keys(self::$folders)).")");
 		$type = $matches[2];
 		// find it
 		$xFile = $file = $class = null;
@@ -203,19 +203,6 @@ class Core {
 	public static function formatRequestToPath ($request) {
 		return self::$namespace.preg_replace(array('=/=','=\.([^\.]+)$='),array('.','.controllers.\1'),$request);
 	}
-	
-
-
-	public static function getValue ($name, $mixed=null) {
-		if (is_array($mixed))
-			return isset($mixed[$name])
-				? $mixed[$name]
-				: false;
-		if (is_object($mixed))
-			return isset($mixed->{$name})
-				? $mixed->{$name}
-				: false;
-	}
 
 }
 
@@ -236,7 +223,7 @@ class Box {
 		$getter = 'get'.ucfirst($name);
     return $name && method_exists($this,$getter)
 			? $this->$getter()
-			: Core::getValue($name,$this);
+			: Devmo::getValue($name,$this);
 	}
 
 }
