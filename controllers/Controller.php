@@ -113,8 +113,8 @@ abstract class Controller extends \devmo\libs\Loader {
   	return Core::execute(Core::formatPath($path,'controllers'),$data);
   }
 	
-	protected function runRequest ($request) {
-		return Core::execute(Core::formatRequestToPath($request));
+	protected function runRequest ($request, $data=null) {
+		return Core::execute(Core::formatRequestToPath($request), $data);
 	}
 
   abstract public function run ();
