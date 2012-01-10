@@ -3,6 +3,7 @@ namespace devmo\controllers;
 
 use \devmo\libs\Core;
 use \devmo\exceptions\Exception;
+use \Devmo;
 
 abstract class Controller extends \devmo\libs\Loader {
   protected $success = null;
@@ -63,7 +64,7 @@ abstract class Controller extends \devmo\libs\Loader {
 
   public function getData ($key=null, $default=null) {
   	return $key
-  		? (Core::getValue($key,$this->data) ? $this->data[$key] : $default)
+  		? (Devmo::getValue($key,$this->data) ? $this->data[$key] : $default)
   		: $this->data;
   }
 
@@ -77,23 +78,23 @@ abstract class Controller extends \devmo\libs\Loader {
   }
 
 	protected function getGet ($name, $makeSafe=true) {
-		return (($value = Core::getValue($name,$_GET)) && $makeSafe)
+		return (($value = Devmo::getValue($name,$_GET)) && $makeSafe)
 			? Core::makeSafe($value)
 			: $value;
 	}
 
 	protected function getPost ($name, $makeSafe=true) {
-		return (($value = Core::getValue($name,$_POST)) && $makeSafe)
+		return (($value = Devmo::getValue($name,$_POST)) && $makeSafe)
 			? Core::makeSafe($value)
 			: $value;
 	}
 
 	protected function getSession ($name) {
-		return Core::getValue($name,$_SESSION);
+		return Devmo::getValue($name,$_SESSION);
 	}
 
 	protected function getRequest ($name, $makeSafe=true) {
-		return (($value = Core::getValue($name,$_REQUEST)) && $makeSafe)
+		return (($value = Devmo::getValue($name,$_REQUEST)) && $makeSafe)
 			? Core::makeSafe($value)
 			: $value;
 	}
@@ -105,7 +106,7 @@ abstract class Controller extends \devmo\libs\Loader {
 	}
 
 	protected static function getServer ($name) {
-		return Core::getValue($name,$_SERVER);
+		return Devmo::getValue($name,$_SERVER);
 	}
 	
   protected function runController ($path, $data=null) {
