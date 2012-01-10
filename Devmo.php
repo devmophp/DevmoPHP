@@ -2,11 +2,10 @@
 // require core classes
 define('DEVMO_DIR',preg_replace('=^(.+)/[^/]+$=','\1',__FILE__));
 require(DEVMO_DIR."/libs/Core.php");
-require(DEVMO_DIR."/libs/Exception.php");
 
 use \devmo\libs\Core;
 use \devmo\libs\Logger;
-use \devmo\libs\CoreException;
+use \devmo\exceptions\CoreException;
 
 class Devmo {
 

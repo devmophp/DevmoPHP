@@ -1,8 +1,8 @@
 <?php
 namespace devmo\daos;
 
-use \Exception;
-use \devmo\libs\InvalidException;
+use \devmo\exceptions\CoreException;
+use \devmo\exceptions\InvalidException;
 /**
  * Common gateway for database queries and tools.
  *
@@ -57,7 +57,7 @@ class Database extends Dao {
 		if (!DatabaseBox::getDbh($this->dbk)) {
 			$mysqli = new \mysqli($this->host,$this->user,$this->pass,$this->name);
 			if (!($mysqli instanceof \mysqli))
-				throw new Exception('Could not connect to the database');
+				throw new CoreException('Database',array('error'=>'Could not connect to the database'));
 			DatabaseBox::setDbh($this->dbk,$mysqli);
 		}
 		return true;
@@ -89,7 +89,7 @@ class Database extends Dao {
 	protected function query ($sql, $returnNewId=false) {
 		$dbh = DatabaseBox::getDbh($this->dbk);
 		if (!$result = $dbh->query($sql))
-			throw new DevmoException('Error Querying Database: '.$dbh->errno.':'.$dbh->error.":\n".preg_replace('=\s+=',' ',$sql));
+			throw new CoreException('Database',array('errorno'=>$dbh->errno,'error'=>$dbh->error."\n".preg_replace('=\s+=',' ',$sql)));
 		if ($result instanceof \mysqli_result)
 			return new ResultSetDatabaseDao($result);
 		if ($returnNewId)
@@ -197,7 +197,7 @@ class ResultSetDatabaseDao implements \Iterator, \Countable {
 
 	public function __construct ($result) {
 		if (!($result instanceof \mysqli_result))
-			throw new InvalidDevmoException('DB Query Resource',$dbResource);
+			throw new InvalidException('DB Query Resource',$dbResource);
 		$this->result = $result;
 		$this->position = 0;
 	}

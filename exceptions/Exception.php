@@ -1,5 +1,5 @@
 <?php
-namespace devmo\libs;
+namespace devmo\exceptions;
 
 class Exception extends \LogicException {
   private $path;
@@ -43,39 +43,4 @@ class Exception extends \LogicException {
     return $err;
   }  
   
-}
-
-
-class CoreException extends \devmo\libs\Exception {
-  public $name;
-  public $tokens;
-
-
-  public function __construct ($name=null, $tokens=null) {
-    $this->name = $name;
-    $this->tokens = is_array($tokens) ? $tokens : array();
-    parent::__construct("DevmoCoreException::{$name}");
-  }
-  
-
-  public function __toString () {
-    $info = "";
-    foreach ($this->tokens as $k=>$v)
-	    $info .= ucfirst($k).":{$v} ";
-		parent::setInfo($info);
-    return parent::__toString();
-  }
-
-}
-
-
-
-class UniqueException extends \devmo\libs\Exception {
-}
-
-
-class InvalidException extends \devmo\libs\Exception {
-  public function __construct ($what,$value) {
-    parent::__construct(($value ? "Invalid Value Found For {$what}" : "Missing Value For {$what}"));
-  }
 }

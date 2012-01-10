@@ -1,16 +1,17 @@
 <?php
 namespace devmo\libs;
 
-use \devmo\libs\CoreException;
-use \devmo\libs\InvalidException;
 use \devmo;
+use \devmo\exceptions\Exception;
+use \devmo\exceptions\CoreException;
+use \devmo\exceptions\InvalidException;
 
 class Core {
 	public static $debug = false;
 	public static $mappings = array();
 	public static $namespace = null;
-	public static $namespaces = array('controllers'=>array(),'views'=>array(),'libs'=>array(),'daos'=>array(),'dtos'=>array());
-	public static $folders = array('controllers'=>'_controllers','views'=>'_views','libs'=>'_libs','daos'=>'_daos','dtos'=>'_dtos');
+	public static $namespaces = array('controllers'=>array(),'views'=>array(),'libs'=>array(),'exceptions'=>array(),'daos'=>array(),'dtos'=>array());
+	public static $folders = array('controllers'=>'_controllers','views'=>'_views','libs'=>'_libs','exceptions'=>'_exceptions','daos'=>'_daos','dtos'=>'_dtos');
 	public static $pageNotFoundController = 'devmo.controllers.FourOFour';
 	public static $requestedController = null;
 	public static $homeController = null;
@@ -55,12 +56,12 @@ class Core {
 		//  successful execution go to next
 		if ($view===true && $controller->getSuccess()) {
 			if ($controller->getSuccess()==$path)
-				throw new DevmoException('Success Controller Can Not Equal Self ['.$path.']');
+				throw new Exception('Success Controller Can Not Equal Self ['.$path.']');
 			return self::executeController($controller->getSuccess(),null,$controller->getMessage());
 			//  unsuccessful execution
 		} else if ($view===false && $controller->getFailure()) {
 			if ($controller->getFailure()==$path)
-				throw new DevmoException('Failure Controller Can Not Equal Self ['.$path.']');
+				throw new Exception('Failure Controller Can Not Equal Self ['.$path.']');
 			return self::executeController($controller->getFailure(),null,$controller->getMessage());
 		} else if ($view instanceof View) {
 			return $view;
@@ -74,7 +75,7 @@ class Core {
 		$context = Devmo::getValue(1,$matches);
 		// define type
 		if (!isset($matches[2]) || !isset(self::$folders[$matches[2]]))
-			throw new \devmo\libs\Exception((($fileType = Devmo::getValue(2,$matches))?"unknown file type:{$fileType}":"missing file type")." for:{$name}"." (types:".implode(',',array_keys(self::$folders)).")");
+			throw new Exception((($fileType = Devmo::getValue(2,$matches))?"unknown file type:{$fileType}":"missing file type")." for:{$name}"." (types:".implode(',',array_keys(self::$folders)).")");
 		$type = $matches[2];
 		// find it
 		$xFile = $file = $class = null;
@@ -201,7 +202,8 @@ class Core {
 
 	
 	public static function formatRequestToPath ($request) {
-		return self::$namespace.preg_replace(array('=/=','=\.([^\.]+)$='),array('.','.controllers.\1'),$request);
+		preg_match('=(.*?)/?([^/]+$)=',$request,$matches);
+		return self::$namespace.str_replace('/','.',$matches[1].'.controllers.'.str_replace(' ','',ucwords(preg_replace('/[\-\+]+/',' ',$matches[2]))));
 	}
 
 }

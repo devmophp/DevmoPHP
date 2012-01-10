@@ -2,7 +2,7 @@
 namespace devmo\controllers;
 
 use \devmo\libs\Core;
-use \devmo\libs\Exception as DevmoException;
+use \devmo\exceptions\Exception;
 
 abstract class Controller extends \devmo\libs\Loader {
   protected $success = null;
@@ -23,7 +23,7 @@ abstract class Controller extends \devmo\libs\Loader {
 
   public function setSuccess ($controller) {
   	if (!$controller)
-  		throw new DevmoException('Missing Success Controller');
+  		throw new Exception('Missing Success Controller');
     $this->success = Path::getPath($controller,$this->getContext());
   }
 
@@ -33,7 +33,7 @@ abstract class Controller extends \devmo\libs\Loader {
 
   public function setFailure ($controller) {
   	if (!$controller)
-  		throw new DevmoException('Missing Failure Controller');
+  		throw new Exception('Missing Failure Controller');
     $this->failure = Path::getPath($controller,$this->getContext());
   }
 
@@ -96,6 +96,12 @@ abstract class Controller extends \devmo\libs\Loader {
 		return (($value = Core::getValue($name,$_REQUEST)) && $makeSafe)
 			? Core::makeSafe($value)
 			: $value;
+	}
+	
+	protected function getRequestController () {
+		return Core::$requestedController
+			? Core::$requestedController
+			: Core::$homeController;
 	}
 
 	protected static function getServer ($name) {

@@ -4,7 +4,7 @@ h1,h2 {
 	color: #660000;
 }
 h2 {
-	font-size: 13px;
+	font-size: 12px;
 }
 div, p, li, td, pre, label {
 	font: normal 12px arial;
@@ -15,13 +15,20 @@ label {
 	font-weight: bold;
 	padding-right: 5px;
 }
+div,pre {
+	padding: 15px;
+}
+div.header {
+	white-space: nowrap;
+	text-align: center;
+}
+div.header span {
+	font: bold 14px arial;
+}
+div.header span span {
+	font: normal 11px arial;
+}
 </style>
-<div style="width:50%;margin:50px auto 0px auto;text-align:center">
-  <h1>Problem!</h1>
-  <p><?php echo $this->body ?></p>
-</div>
-<div style="padding:15px;">
- 	<pre style="font-size: 10px;">
- 		<?=$this->trace?>
- 	</pre>
-</div>
+<div class="header"><span>so, um, ya... you have problems<br /><span>but knowing is half the battle</span></span></div>
+<div><?=$this->body?></div>
+<pre style="font-size: 10px;"><?=$this->trace?></pre>
