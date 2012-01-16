@@ -124,5 +124,5 @@ class Devmo {
 // set defaults
 Devmo::addNamespace('devmo',DEVMO_DIR);
 Devmo::setDebug(false);
-Devmo::setLog('../log/'.strtolower(Devmo::getValue('HTTP_HOST',$_SERVER)).'.log');
+Devmo::setLog('../logs/'.strtolower(Devmo::getValue('HTTP_HOST',$_SERVER)).'.log');
 Devmo::setRequest(Devmo::getValue('PATH_INFO',$_SERVER));

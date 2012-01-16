@@ -29,6 +29,6 @@ div.header span span {
 	font: normal 11px arial;
 }
 </style>
-<div class="header"><span>so, um, ya... you have problems<br /><span>but knowing is half the battle</span></span></div>
+<div class="header"><span>you have problems!<br /><span>but knowing is half the battle</span></span></div>
 <div><?=$this->body?></div>
 <pre style="font-size: 10px;"><?=$this->trace?></pre>
