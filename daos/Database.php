@@ -89,7 +89,7 @@ class Database extends Dao {
 	protected function query ($sql, $returnNewId=false) {
 		$dbh = DatabaseBox::getDbh($this->dbk);
 		if (!$result = $dbh->query($sql))
-			throw new CoreException('Database',array('errorno'=>$dbh->errno,'error'=>$dbh->error."\n".preg_replace('=\s+=',' ',$sql)));
+			throw new CoreException('Database',array('errorno'=>$dbh->errno,'error'=>$dbh->error.PHP_EOL.preg_replace('=\s+=',' ',$sql)));
 		if ($result instanceof \mysqli_result)
 			return new ResultSetDatabaseDao($result);
 		if ($returnNewId)

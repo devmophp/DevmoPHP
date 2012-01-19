@@ -15,6 +15,7 @@ class Core {
 	public static $pageNotFoundController = 'devmo.controllers.FourOFour';
 	public static $requestedController = null;
 	public static $homeController = null;
+	public static $logFile = null;
 
 
 	public static function execute ($name=false, $data=null) {
@@ -168,12 +169,12 @@ class Core {
 		self::$debug
 			? Devmo::debug($e->__toString(),'log entry')
 			: Devmo::debug($e->getMessage(),'See the error log for more details');
-		if (!Logger::add($e->__toString()))
-			Devmo::debug(null,'Could not log error');
+		self::logException($e);
 	}
 
 
 	public static function handleCoreException (CoreException $e) {
+		self::logException($e);
 		if (self::$debug) {
 			$controller = self::getObject('devmo.controllers.Error','new');
 			$controller->setException($e);
@@ -190,6 +191,12 @@ class Core {
 			$class = str_replace(array('/','\\'),'.',$class);
 		self::getObject($class,'load');
 	}
+	
+	public static function logException (Exception $e) {
+		self::$logFile
+			? error_log($e->__toString(),3,self::$logFile)
+			: error_log(preg_replace('=[\t'.PHP_EOL.']+=',' ',$e->__toString()),0);
+	} 
 
 
 	public static function formatPath ($path, $type, $context=null) {

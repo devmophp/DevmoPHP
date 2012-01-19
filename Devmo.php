@@ -4,7 +4,7 @@ define('DEVMO_DIR',preg_replace('=^(.+)/[^/]+$=','\1',__FILE__));
 require(DEVMO_DIR."/libs/Core.php");
 
 use \devmo\libs\Core;
-use \devmo\libs\Logger;
+use \devmo\exceptions\Exception;
 use \devmo\exceptions\CoreException;
 
 class Devmo {
@@ -58,7 +58,7 @@ class Devmo {
 
 
 	public static function setLog ($file) {
-		Logger::setDefaultFile($file);
+		Core::$logFile = $file;
 	}
 
 
@@ -96,8 +96,8 @@ class Devmo {
 
 
 	public static function debug ($obj, $text='DEBUG', $opt=FALSE) {
-		echo "<pre>\n";
-		echo "{$text}\n";
+		echo '<pre>'.PHP_EOL;
+		echo $text.PHP_EOL;
 		switch ($opt) {
 			default:
 				print_r($obj);
@@ -117,12 +117,11 @@ class Devmo {
 				echo $obj->asXML();
 				break;
 		}
-		echo "\n</pre>";
+		echo PHP_EOL.'</pre>';
 	}
 }
 
 // set defaults
 Devmo::addNamespace('devmo',DEVMO_DIR);
 Devmo::setDebug(false);
-Devmo::setLog('../logs/'.strtolower(Devmo::getValue('HTTP_HOST',$_SERVER)).'.log');
 Devmo::setRequest(Devmo::getValue('PATH_INFO',$_SERVER));

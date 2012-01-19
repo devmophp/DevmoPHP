@@ -18,6 +18,10 @@ label {
 div,pre {
 	padding: 15px;
 }
+.trace {
+	font: normal 10px arial;
+	color: #550000;
+}
 div.header {
 	white-space: nowrap;
 	text-align: center;
@@ -29,6 +33,6 @@ div.header span span {
 	font: normal 11px arial;
 }
 </style>
-<div class="header"><span>you have problems!<br /><span>but knowing is half the battle</span></span></div>
+<div class="header"><span>you have problems<br /><span>(knowing is half the battle)</span></span></div>
 <div><?=$this->body?></div>
-<pre style="font-size: 10px;"><?=$this->trace?></pre>
+<pre class="trace"><?=$this->trace?></pre>

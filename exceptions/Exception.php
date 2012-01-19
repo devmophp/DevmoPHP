@@ -24,22 +24,19 @@ class Exception extends \LogicException {
 
 
   public function __toString () {
-    $err = "\nWhat: ".$this->getMessage()
-         .($this->info ? "\nInfo: {$this->info}" : null)
-         .($this->path ? "\nPath: {$this->path}" : null)
-         . "\nWhen: ".date('Y-m-d H:m:s')
-         . "\nWhere: ";
+    $err = "What: ".$this->getMessage()
+				 . PHP_EOL."When: ".date('Y-m-d H:m:s')
+         .($this->path ? PHP_EOL."Path: {$this->path}" : null)
+         .($this->info ? PHP_EOL."Info: {$this->info}" : null);
     foreach ($this->getTrace() as $i=>$x) {
-      $err .= ($i>0?"       ":null)
-           .  (isset($x['file'])?$x['file']:null)
-           .  ":" .(isset($x['line'])?$x['line']:null)
-           .  " " 
-           .  (isset($x['class'])?$x['class']:null)
-           .  (isset($x['type']) ?$x['type']:null)
-           .  (isset($x['function'])?$x['function']:null)
-           #.  (isset($x['args'])?"(".implode(',',$x['args']).")":null)
-           .  "\n";
+      $err .= PHP_EOL
+           .(isset($x['file'])?$x['file']:null)
+           .(isset($x['line'])?":{$x['line']} ":" ")
+           .(isset($x['class'])?$x['class']:null)
+           .(isset($x['type'])?$x['type']:null)
+           .(isset($x['function'])?$x['function']:null);
     }
+		$err .= PHP_EOL;
     return $err;
   }  
   
