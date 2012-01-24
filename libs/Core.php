@@ -289,6 +289,9 @@ class Config {
 	public static function hasRequestControllerMap () {
 		return (self::$requestControllerMap);
 	}
+	public static function getRequestControllerMap () {
+		return self::$requestControllerMap;
+	}
 	public static function getTypeDirectoryMap () {
 		return self::$typeDirectoryMap;
 	}
