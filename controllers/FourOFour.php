@@ -12,7 +12,7 @@ class FourOFour extends \devmo\controllers\Controller {
 
   public function run () {
   	header("HTTP/1.0 404 Not Found");
-    $view = $this->getView('/SiteWrapper');
+    $view = $this->getView('SiteWrapper');
     $view->body = $this->getView();
     return $view;
   }

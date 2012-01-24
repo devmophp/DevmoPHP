@@ -27,7 +27,8 @@ class Exception extends \LogicException {
     $err = "What: ".$this->getMessage()
 				 . PHP_EOL."When: ".date('Y-m-d H:m:s')
          .($this->path ? PHP_EOL."Path: {$this->path}" : null)
-         .($this->info ? PHP_EOL."Info: {$this->info}" : null);
+         .($this->info ? PHP_EOL."Info: {$this->info}" : null)
+				 .PHP_EOL."Where: {$this->file}:{$this->line} [{$this->code}]";
     foreach ($this->getTrace() as $i=>$x) {
       $err .= PHP_EOL
            .(isset($x['file'])?$x['file']:null)

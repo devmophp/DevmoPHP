@@ -1,8 +1,8 @@
 <?php
 namespace devmo\libs;
-use Devmo\libs\Core;
-use Devmo\libs\CoreException;
-use Devmo\controllers\Controller;
+use devmo\libs\Core;
+use devmo\libs\CoreException;
+use devmo\controllers\Controller;
 
 class Loader {
 	private $context = null;
@@ -57,6 +57,10 @@ class Loader {
 
 	protected function getLibrary ($path) {
 		return $this->get(Core::formatPath($path,'libs',$this->fileBox->context));
+	}
+
+	protected function getInclude ($path) {
+		return $this->get(Core::formatPath($path,'includes',$this->fileBox->context),'load');
 	}
 
 }

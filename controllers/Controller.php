@@ -1,9 +1,11 @@
 <?php
 namespace devmo\controllers;
 
-use \devmo\libs\Core;
-use \devmo\exceptions\Exception;
 use \Devmo;
+use \devmo\libs\Core;
+use \devmo\libs\Config;
+use \devmo\exceptions\Exception;
+
 
 abstract class Controller extends \devmo\libs\Loader {
   protected $success = null;
@@ -100,9 +102,9 @@ abstract class Controller extends \devmo\libs\Loader {
 	}
 	
 	protected function getRequestController () {
-		return Core::$requestedController
-			? Core::$requestedController
-			: Core::$homeController;
+		return Config::getRequestedController()
+			? Config::getRequestedController()
+			: Config::getDefaultController();
 	}
 
 	protected static function getServer ($name) {

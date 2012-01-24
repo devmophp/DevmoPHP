@@ -1,4 +1,6 @@
 <h2>Undefined Namespace</h2>
-<label>name:</label><?=$this->name?>
+<label>path:</label><?=$this->path?>
 <br />
-<label>namespaces:</label><?=implode(', ',array_keys($this->namespaces))?>
+<label>namespace:</label><?=$this->namespace?>
+<br />
+<label>available namespaces:</label><?=$this->namespaces?>
