@@ -160,7 +160,7 @@ class Core {
 			echo self::handleCoreException($e);
 		} else {
 			Config::getDebug()
-				? Devmo::debugdebug($e->__toString(),'log entry')
+				? Devmo::debug($e->__toString(),'log entry')
 				: Devmo::debug($e->getMessage(),'See the error log for more details');
 			self::logException($e);
 		}
