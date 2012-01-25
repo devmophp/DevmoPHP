@@ -68,7 +68,7 @@ class Core {
 		preg_match('/^(.*?)([^\.]+)\.([^\.]+)$/',$path,$matches);
 		$context = Devmo::getValue(1,$matches);
 		if (!isset($matches[2]) || !isset($typeDirectoryMap[$matches[2]]))
-			throw new Exception((($fileType = Devmo::getValue(2,$matches))?"unknown file type:{$fileType}":"missing file type")." for:{$path}"." (types:".implode(',',array_keys($typeDirectoryMap)).")");
+			throw new CoreException('FileTypeNotFound',array('type'=>Devmo::getValue(2,$matches),'path'=>$path,'types'=>implode(',',array_keys($typeDirectoryMap))));
 		$type = $matches[2];
 		// put it together
 		$xFile = $file = $class = null;
@@ -236,6 +236,7 @@ class Config {
 	private static $defaultNamespace = null;
 	private static $debug = false;
 	private static $errorLogFile = null;
+	private static $request = null;
 
 
 	# for application use
@@ -263,8 +264,10 @@ class Config {
 	}
 
 	public static function setRequest ($request=null) {
-		if ($request && $request!='/')
+		if ($request && $request!='/') {
+			self::$request = $request;
 			self::$requestedController = Core::formatRequestToPath($request);
+		}
 	}
 
 	public static function setDebug ($debug=false) {
@@ -277,6 +280,9 @@ class Config {
 
 
 	# for framework use
+	public static function getRequest () {
+		return self::$request;
+	}
 	public static function getRequestedController () {
 		return self::$requestedController ? self::getDefaultNamespace().self::$requestedController : null;
 	}

@@ -18,11 +18,11 @@ class Error extends \devmo\controllers\Controller {
 			$message .= " {$k}:{$v}";
     // build wrapper
     $error = $this->getView("devmo.views.{$this->exception->name}Error",$this->getData());
-    $view = $this->getView('devmo.views.Error',array('body'=>$error,'trace'=>"{$this->exception}"));
+    $view = $this->getView('devmo.views.Error',array('body'=>$error,'trace'=>$this->exception->__toViewString()));
     $wrap = $this->runController('devmo.SiteWrapper',array('body'=>$view));
     return $wrap;
   }
-	
+
 	public function setException ($exception) {
 		$this->exception = $exception;
 	}

@@ -11,7 +11,7 @@ class CoreException extends \devmo\exceptions\Exception {
     $this->tokens = is_array($tokens) ? $tokens : array();
     parent::__construct("Core::{$name}");
   }
-  
+
 
   public function __toString () {
     $info = "";
