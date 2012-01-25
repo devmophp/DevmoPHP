@@ -8,10 +8,19 @@ use \devmo\exceptions\InvalidException;
 
 class Core {
 
-	public static function execute ($name=false, $data=null) {
+	public static function execute ($path=false, $data=null) {
 		// find controller
-		if (!($controller = $name) && Config::getRequestedController()) {
+		if (!($controller = $path) && Config::getRequestedController()) {
 			$controller = Config::getRequestedController();
+			// find mapped controller
+			if (Config::hasRequestControllerMap()) {
+				foreach (Config::getRequestControllerMap() as $pattern=>$useController) {
+					if (preg_match($pattern,$controller)) {
+						$controller  = $useController;
+						break;
+					}
+				}
+			}
 		}
 		if (!$controller || $controller === '/') {
 			$controller = Config::getDefaultController();
@@ -24,15 +33,6 @@ class Core {
 
 
 	private static function executeController ($path, $data=null, $message=null) {
-		// find mapped controller
-		if (Config::hasRequestControllerMap()) {
-			foreach (Config::getRequestControllerMap() as $pattern=>$usePath) {
-				if (preg_match($pattern,$path)) {
-					$path = $usePath;
-					break;
-				}
-			}
-		}
 		//  get controller object
 		$controller = self::getObject($path,'new');
 		if ($data)

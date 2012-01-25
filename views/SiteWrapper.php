@@ -8,7 +8,7 @@
       div,td {
         font: normal 12px arial;
       }
-      table { 
+      table {
         border: 1px solid #cccccc;
         border-collapse: collapse;
       }
@@ -27,11 +27,9 @@
         margin: 0 auto;
         padding: 25px 0px;
         width: 700px;
-        height: 400px;
       }
       div.body {
         width: 100%;
-        height: 90%;
         border: 1px solid #cccccc;
         background-color: transparent;
         overflow: auto;
@@ -45,6 +43,5 @@
       </div>
       <?=$this->poweredby?>
     </div>
-    <div style="width:100%;height:100%;background-color:#ffffff"></div>
   </body>
 </html>
