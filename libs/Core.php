@@ -185,7 +185,7 @@ class Core {
 		self::getObject($class,'load');
 	}
 
-	public static function logException (Exception $e) {
+	public static function logException (\Exception $e) {
 		($logFile = Config::getErrorLog())
 			? error_log($e->__toString(),3,$logFile)
 			: error_log(preg_replace('=[\t'.PHP_EOL.']+=',' ',$e->__toString()),0);
@@ -323,13 +323,13 @@ class Config {
 class Box {
 	public function __set ($name, $value) {
 		$setter = 'set'.ucfirst($name);
-    return $name && method_exists($this,$setter)
+    return $name && is_callable(array($this,$setter))
 			? $this->$setter($name,$value)
 			: $this->{$name} = $value;
 	}
 	public function __get ($name) {
 		$getter = 'get'.ucfirst($name);
-    return $name && method_exists($this,$getter)
+    return $name && is_callable(array($this,$getter))
 			? $this->$getter()
 			: Devmo::getValue($name,$this);
 	}
