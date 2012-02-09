@@ -79,44 +79,44 @@ abstract class Controller extends \devmo\libs\Loader {
   		$this->data = & $data;
   }
 
-	protected function getGet ($name, $makeSafe=true) {
-		return (($value = Devmo::getValue($name,$_GET)) && $makeSafe)
+	protected function getGet ($name, $default=false, $makeSafe=true) {
+		return (($value = Devmo::getValue($name,$_GET,$default)) && $makeSafe)
 			? Core::makeSafe($value)
 			: $value;
 	}
 
-	protected function getPost ($name, $makeSafe=true) {
-		return (($value = Devmo::getValue($name,$_POST)) && $makeSafe)
+	protected function getPost ($name, $default=false, $makeSafe=true) {
+		return (($value = Devmo::getValue($name,$_POST,$default)) && $makeSafe)
 			? Core::makeSafe($value)
 			: $value;
 	}
 
-	protected function getSession ($name) {
-		return Devmo::getValue($name,$_SESSION);
+	protected function getSession ($name, $default=false) {
+		return Devmo::getValue($name,$_SESSION,$default);
 	}
 
-	protected function getRequest ($name, $makeSafe=true) {
-		return (($value = Devmo::getValue($name,$_REQUEST)) && $makeSafe)
+	protected function getRequest ($name, $default=false, $makeSafe=true) {
+		return (($value = Devmo::getValue($name,$_REQUEST,$default)) && $makeSafe)
 			? Core::makeSafe($value)
 			: $value;
 	}
-	
+
 	protected function getRequestController () {
 		return Config::getRequestedController()
 			? Config::getRequestedController()
 			: Config::getDefaultController();
 	}
 
-	protected static function getServer ($name) {
-		return Devmo::getValue($name,$_SERVER);
+	protected static function getServer ($name, $default=false) {
+		return Devmo::getValue($name,$_SERVER,$default);
 	}
-	
+
   protected function runController ($path, $data=null) {
   	return Core::execute(Core::formatPath($path,'controllers'),$data);
   }
-	
+
 	protected function runRequest ($request, $data=null) {
-		return Core::execute(Core::formatRequestToPath($request), $data);
+		return Core::execute(Core::formatRequestToPath($request),$data);
 	}
 
   abstract public function run ();
