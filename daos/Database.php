@@ -150,10 +150,10 @@ class Database extends Dao {
 	 * @param mixed $varchar
 	 * @return void
 	 */
-	protected function formatText ($varchar,$nullable=true) {
-		$varchar = trim($varchar);
-		return $varchar
-			? "'".DatabaseBox::getDbh($this->dbk)->real_escape_string($varchar)."'"
+	protected function formatText ($text,$nullable=true) {
+		$text = trim($text);
+		return is_string($text)
+			? "'".DatabaseBox::getDbh($this->dbk)->real_escape_string($text)."'"
 			: ($nullable?'NULL':false);
   }
 
@@ -192,6 +192,7 @@ class DatabaseBox {
 
 
 class ResultSetDatabaseDao implements \Iterator, \Countable {
+	private $dto = '\stdClass';
 	private $result = null;
 	private $position = 0;
 
@@ -206,6 +207,13 @@ class ResultSetDatabaseDao implements \Iterator, \Countable {
 		$this->result->free_result();
 	}
 
+	public function setDto ($dto) {
+		if (empty($dto))
+			throw new InvalidException('DTO',$dto);
+		$this->dto = $dto;
+		return $this;
+	}
+
 	function rewind () {
 		$this->position = 0;
 		if ($this->getNumRecords()>0)
@@ -213,7 +221,7 @@ class ResultSetDatabaseDao implements \Iterator, \Countable {
 	}
 
 	function current () {
-		return $this->result->fetch_object();
+		return $this->result->fetch_object($this->dto);
 	}
 
 	function key () {
@@ -255,13 +263,13 @@ class ResultSetDatabaseDao implements \Iterator, \Countable {
 	}
 
 	function getObject () {
-		return $this->result->fetch_object();
+		return $this->result->fetch_object($this->dto);
 	}
 
 	function getObjects () {
 		$objs = array();
 		$this->rewind();
-		while ($x = $this->result->fetch_object())
+		while ($x = $this->result->fetch_object($this->dto))
 			$objs[] = $x;
 		return $objs;
 	}
