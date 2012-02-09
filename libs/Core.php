@@ -174,7 +174,7 @@ class Core {
 			$controller->setData($e->tokens);
 			return $controller->run();
 		} else {
-			return self::execute(Config::getPageNotFoundController())->getRoot();
+			return self::execute(Config::getRequestNotFoundController())->getRoot();
 		}
 	}
 
@@ -230,7 +230,7 @@ class Config {
 			'daos'=>array(),
 			'dtos'=>array());
 	private static $requestControllerMap = array();
-	private static $pageNotFoundController = 'devmo.controllers.FourOFour';
+	private static $requestNotFoundController = 'devmo.controllers.FourOFour';
 	private static $requestedController = null;
 	private static $defaultController = null;
 	private static $defaultNamespace = null;
@@ -259,8 +259,8 @@ class Config {
 		self::$defaultController = Core::formatPath($controller,'controllers');
 	}
 
-	public static function setPageNotFoundController ($controller) {
-		self::$pageNotFoundController = Core::formatPath($controller,'controllers');
+	public static function setRequestNotFoundController ($controller) {
+		self::$requestNotFoundController = Core::formatPath($controller,'controllers');
 	}
 
 	public static function setRequest ($request=null) {
@@ -289,8 +289,8 @@ class Config {
 	public static function getDefaultController () {
 		return self::$defaultController;
 	}
-	public static function getPageNotFoundController () {
-		return self::$pageNotFoundController;
+	public static function getRequestNotFoundController () {
+		return self::$requestNotFoundController;
 	}
 	public static function hasRequestControllerMap () {
 		return (self::$requestControllerMap);
