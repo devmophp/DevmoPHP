@@ -2,7 +2,7 @@
 namespace devmo\daos;
 
 use \devmo\exceptions\CoreException;
-use \devmo\exceptions\InvalidException;
+use \InvalidArgumentException;
 /**
  * Common gateway for database queries and tools.
  *
@@ -105,11 +105,12 @@ class Database extends Dao {
 	 * @param mixed $date
 	 * @return void
 	 */
-	protected function formatDate ($date,$nullable=true,$first=false) {
-		$date = trim($date);
+	protected function formatDate ($date, $nullable=true, $first=false) {
+		if (!($date = strtotime($date)) && !$nullable)
+			throw new InvalidArgumentException('Invalid Date');
 		return $date
-			? "'".DatabaseBox::getDbh($this->dbk)->real_escape_string(date(($first?DATABASE_DATE_FIRST_FORMAT:DATABASE_DATE_FORMAT),strtotime($date)))."'"
-			: ($nullable?'NULL':false);
+			? "'".date(($first?DATABASE_DATE_FIRST_FORMAT:DATABASE_DATE_FORMAT),$date)."'"
+			: 'NULL';
   }
 
 
@@ -120,55 +121,42 @@ class Database extends Dao {
 	 * @param mixed $dateTime
 	 * @return void
 	 */
-	protected function formatDateTime ($dateTime,$nullable=true) {
-		$dateTime = trim($dateTime);
+	protected function formatDateTime ($dateTime, $nullable=true) {
+		if (!($dateTime = strtotime($dateTime)) && !$nullable)
+			throw new InvalidArgumentException('Invalid DateTime');
 		return $dateTime
-			? "'".DatabaseBox::getDbh($this->dbk)->real_escape_string(date(DATABASE_DATETIME_FORMAT,strtotime($dateTime)))."'"
-			: ($nullable?'NULL':false);
+			? "'".date(DATABASE_DATETIME_FORMAT,$dateTime)."'"
+			: 'NULL';
   }
 
 
 	/**
-	 * formatInt
+	 * formatNumber
 	 *
 	 * @access protected
-	 * @param mixed $int
+	 * @param mixed $number
 	 * @return void
 	 */
-	protected function formatNumber ($int,$nullable=true) {
-		$int = trim($int);
-		return is_numeric($int)
-			? DatabaseBox::getDbh($this->dbk)->real_escape_string(preg_replace('/[^0-9\-\.]*/','',$int))
-			: ($nullable?'NULL':false);
+	protected function formatNumber ($number, $nullable=true) {
+		if (!($number = filter_var($number,FILTER_VALIDATE_FLOAT)) && !$nullable)
+			throw new InvalidArgumentException('Invalid Number');
+		return $number ? $number : 'NULL';
   }
 
 
 	/**
-	 * formatVarchar
+	 * formatText
 	 *
 	 * @access protected
-	 * @param mixed $varchar
+	 * @param mixed $text
 	 * @return void
 	 */
-	protected function formatText ($text,$nullable=true) {
-		$text = trim($text);
-		return is_string($text)
+	protected function formatText ($text, $nullable=true) {
+		if (!($text=trim($text)) && !$nullable)
+			throw new InvalidArgumentException('Invalid Text');
+		return $text
 			? "'".DatabaseBox::getDbh($this->dbk)->real_escape_string($text)."'"
-			: ($nullable?'NULL':false);
-  }
-
-
-	/**
-	 * formatMD5
-	 *
-	 * @access protected
-	 * @param mixed $md5
-	 * @return void
-	 */
-	protected function formatMD5 ($md5,$nullable=true) {
-		return $md5
-			? "'".md5($md5)."'"
-			: ($nullable?'NULL':false);
+			: 'NULL';
   }
 
 }
@@ -198,7 +186,7 @@ class ResultSetDatabaseDao implements \Iterator, \Countable {
 
 	public function __construct ($result) {
 		if (!($result instanceof \mysqli_result))
-			throw new InvalidException('DB Query Resource',$dbResource);
+			throw new InvalidArgumentException('DB Query Resource');
 		$this->result = $result;
 		$this->position = 0;
 	}
@@ -209,7 +197,7 @@ class ResultSetDatabaseDao implements \Iterator, \Countable {
 
 	public function setDto ($dto) {
 		if (empty($dto))
-			throw new InvalidException('DTO',$dto);
+			throw new InvalidArgumentException('DTO');
 		$this->dto = $dto;
 		return $this;
 	}
