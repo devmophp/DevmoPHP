@@ -105,12 +105,10 @@ class Database extends Dao {
 	 * @param mixed $date
 	 * @return void
 	 */
-	protected function formatDate ($date, $nullable=true, $first=false) {
-		if (!($date = strtotime($date)) && !$nullable)
+	protected function formatDate ($date=null, $nullable=true, $first=false) {
+		if ((!$nullable && $date===null) || !($date = strtotime($date)))
 			throw new InvalidArgumentException('Invalid Date');
-		return $date
-			? "'".date(($first?DATABASE_DATE_FIRST_FORMAT:DATABASE_DATE_FORMAT),$date)."'"
-			: 'NULL';
+		return $date===null ? 'NULL' : "'".date(($first?DATABASE_DATE_FIRST_FORMAT:DATABASE_DATE_FORMAT),$date)."'";
   }
 
 
@@ -121,12 +119,10 @@ class Database extends Dao {
 	 * @param mixed $dateTime
 	 * @return void
 	 */
-	protected function formatDateTime ($dateTime, $nullable=true) {
-		if (!($dateTime = strtotime($dateTime)) && !$nullable)
+	protected function formatDateTime ($dateTime=null, $nullable=true) {
+		if ((!$nullable && $dateTime===null) || !($dateTime = strtotime($dateTime)))
 			throw new InvalidArgumentException('Invalid DateTime');
-		return $dateTime
-			? "'".date(DATABASE_DATETIME_FORMAT,$dateTime)."'"
-			: 'NULL';
+		return $dateTime===null ? 'NULL' : "'".date(DATABASE_DATETIME_FORMAT,$dateTime)."'";
   }
 
 
@@ -137,10 +133,10 @@ class Database extends Dao {
 	 * @param mixed $number
 	 * @return void
 	 */
-	protected function formatNumber ($number, $nullable=true) {
-		if (!($number = filter_var($number,FILTER_VALIDATE_FLOAT)) && !$nullable)
+	protected function formatNumber ($number=null, $nullable=true) {
+		if ((!$nullable && $number===null) || !is_numeric($number))
 			throw new InvalidArgumentException('Invalid Number');
-		return $number ? $number : 'NULL';
+		return $number===null ? 'NULL' : $number;
   }
 
 
@@ -151,12 +147,10 @@ class Database extends Dao {
 	 * @param mixed $text
 	 * @return void
 	 */
-	protected function formatText ($text, $nullable=true) {
-		if (!($text=trim($text)) && !$nullable)
+	protected function formatText ($text=null, $nullable=true) {
+		if (!$nullable && $text===null)
 			throw new InvalidArgumentException('Invalid Text');
-		return $text
-			? "'".DatabaseBox::getDbh($this->dbk)->real_escape_string($text)."'"
-			: 'NULL';
+		return $text===null ? 'NULL' : "'".DatabaseBox::getDbh($this->dbk)->real_escape_string($text)."'";
   }
 
 }
