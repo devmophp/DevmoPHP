@@ -28,7 +28,7 @@ class Database extends Dao {
 	 * @access public
 	 * @return void
 	 */
-	public function __construct ($host,$dbname,$user,$pass) {
+	public function __construct ($host, $user, $pass, $name=null) {
 		if (!defined('DATABASE_DATE_FORMAT'))
 			define('DATABASE_DATE_FORMAT','Y-m-d');
 		if (!defined('DATABASE_DATE_FIRST_FORMAT'))
@@ -36,10 +36,10 @@ class Database extends Dao {
 		if (!defined('DATABASE_DATETIME_FORMAT'))
 			define('DATABASE_DATETIME_FORMAT','Y-m-d H:i:s');
 		$this->host = $host;
-		$this->name = $dbname;
 		$this->user = $user;
 		$this->pass = $pass;
-		$this->dbk = $this->host.$this->name;
+		$this->name = $name;
+		$this->dbk = $this->host.$this->user.$this->name;
 		if (!DatabaseBox::getDbh($this->dbk))
 			$this->connect();
 	}
@@ -59,8 +59,14 @@ class Database extends Dao {
 			if (!($mysqli instanceof \mysqli))
 				throw new CoreException('Database',array('error'=>'Could not connect to the database'));
 			DatabaseBox::setDbh($this->dbk,$mysqli);
+			if ($this->name!=null)
+				$this->useSchema($this->name);
 		}
 		return true;
+	}
+
+	protected function useSchema ($name) {
+		DatabaseBox::getDbh($this->dbk)->select_db($name);
 	}
 
 
@@ -86,14 +92,18 @@ class Database extends Dao {
 	 * @param mixed $sql
 	 * @return void
 	 */
-	protected function query ($sql, $returnNewId=false) {
+	protected function query ($sql, $add=null) {
 		$dbh = DatabaseBox::getDbh($this->dbk);
 		if (!$result = $dbh->query($sql))
 			throw new CoreException('Database',array('errorno'=>$dbh->errno,'error'=>$dbh->error.PHP_EOL.preg_replace('=\s+=',' ',$sql)));
 		if ($result instanceof \mysqli_result)
 			return new ResultSetDatabaseDao($result);
-		if ($returnNewId)
-			return DatabaseBox::getDbh($this->dbk)->insert_id;
+		if ($add) {
+			$id = DatabaseBox::getDbh($this->dbk)->insert_id;
+			if ($add instanceof \devmo\dtos\Dto)
+				$add->setId($id);
+			return $id;
+		}
 		return true;
 	}
 
@@ -189,8 +199,8 @@ class ResultSetDatabaseDao implements \Iterator, \Countable {
 		$this->result->free_result();
 	}
 
-	public function setDto ($dto) {
-		if (empty($dto))
+	public function setDto (\devmo\dtos\Dto $dto) {
+		if (empty($dto) || !($dto instanceof \devmo\dtos\Dto))
 			throw new InvalidArgumentException('DTO');
 		$this->dto = $dto;
 		return $this;
