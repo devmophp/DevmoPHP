@@ -27,6 +27,8 @@ class Loader {
   }
 
   protected function get ($path, $option='auto') {
+		if ($path[0]=='.')
+			$path = $this->fileBox->context.substr($path,1);
   	return Core::getObject($path,$option);
   }
 
