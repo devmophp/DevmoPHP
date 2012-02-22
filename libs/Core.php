@@ -264,7 +264,7 @@ class Config {
 	}
 
 	public static function setRequest ($request=null) {
-		if ($request && $request!='/') {
+		if ($request && ($request = preg_replace('=/+=','/',$request)) && $request!='/') {
 			self::$request = $request;
 			self::$requestedController = Core::formatRequestToPath($request);
 		}
