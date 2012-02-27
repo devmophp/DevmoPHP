@@ -117,7 +117,7 @@ class Database extends Dao {
 	 */
 	protected function formatDate ($date=null, $nullable=true, $first=false) {
 		if ((!$nullable && $date===null) || !($date = strtotime($date)))
-			throw new InvalidArgumentException('Invalid Date');
+			throw new InvalidArgumentException('Date');
 		return $date===null ? 'NULL' : "'".date(($first?DATABASE_DATE_FIRST_FORMAT:DATABASE_DATE_FORMAT),$date)."'";
   }
 
@@ -131,7 +131,7 @@ class Database extends Dao {
 	 */
 	protected function formatDateTime ($dateTime=null, $nullable=true) {
 		if ((!$nullable && $dateTime===null) || !($dateTime = strtotime($dateTime)))
-			throw new InvalidArgumentException('Invalid DateTime');
+			throw new InvalidArgumentException('DateTime');
 		return $dateTime===null ? 'NULL' : "'".date(DATABASE_DATETIME_FORMAT,$dateTime)."'";
   }
 
@@ -145,7 +145,7 @@ class Database extends Dao {
 	 */
 	protected function formatNumber ($number=null, $nullable=true) {
 		if ((!$nullable && $number===null) || !is_numeric($number))
-			throw new InvalidArgumentException('Invalid Number');
+			throw new InvalidArgumentException('Number');
 		return $number===null ? 'NULL' : $number;
   }
 
@@ -159,7 +159,7 @@ class Database extends Dao {
 	 */
 	protected function formatText ($text=null, $nullable=true) {
 		if (!$nullable && $text===null)
-			throw new InvalidArgumentException('Invalid Text');
+			throw new InvalidArgumentException('Text');
 		return $text===null ? 'NULL' : "'".DatabaseBox::getDbh($this->dbk)->real_escape_string($text)."'";
   }
 
