@@ -108,6 +108,7 @@ class Database extends Dao {
 	}
 
 
+
 	/**
 	 * formatDate
 	 *
@@ -116,8 +117,8 @@ class Database extends Dao {
 	 * @return void
 	 */
 	protected function formatDate ($date=null, $nullable=true, $first=false) {
-		if ((!$nullable && $date===null) || !($date = strtotime($date)))
-			throw new InvalidArgumentException('Date');
+		if (($date===null && !$nullable) || ($date!==null && !($date = strtotime($date))))
+			throw new InvalidArgumentException('Invalid Date');
 		return $date===null ? 'NULL' : "'".date(($first?DATABASE_DATE_FIRST_FORMAT:DATABASE_DATE_FORMAT),$date)."'";
   }
 
@@ -130,8 +131,8 @@ class Database extends Dao {
 	 * @return void
 	 */
 	protected function formatDateTime ($dateTime=null, $nullable=true) {
-		if ((!$nullable && $dateTime===null) || !($dateTime = strtotime($dateTime)))
-			throw new InvalidArgumentException('DateTime');
+		if (($dateTime===null && !$nullable) || ($dateTime!==null && !($dateTime = strtotime($dateTime))))
+			throw new InvalidArgumentException('Invalid DateTime');
 		return $dateTime===null ? 'NULL' : "'".date(DATABASE_DATETIME_FORMAT,$dateTime)."'";
   }
 
@@ -144,8 +145,8 @@ class Database extends Dao {
 	 * @return void
 	 */
 	protected function formatNumber ($number=null, $nullable=true) {
-		if ((!$nullable && $number===null) || !is_numeric($number))
-			throw new InvalidArgumentException('Number');
+		if (($number===null && !$nullable) || ($number!==null && !is_numeric($number)))
+			throw new InvalidArgumentException('Invalid Number');
 		return $number===null ? 'NULL' : $number;
   }
 
@@ -159,7 +160,7 @@ class Database extends Dao {
 	 */
 	protected function formatText ($text=null, $nullable=true) {
 		if (!$nullable && $text===null)
-			throw new InvalidArgumentException('Text');
+			throw new InvalidArgumentException('Invalid Text');
 		return $text===null ? 'NULL' : "'".DatabaseBox::getDbh($this->dbk)->real_escape_string($text)."'";
   }
 
