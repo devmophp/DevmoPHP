@@ -89,35 +89,30 @@ class Core {
 		if ($file==null)
 			throw new CoreException('FileNotFound',array('request'=>$xFile));
 		// return file box
-		$box = new Box;
-		$box->type = $type;
-		$box->class = $class;
-		$box->file = $file;
-		$box->context = $context;
-		return $box;
+		return new FileBox(compact('type','class','file','context'));
 	}
 
 
 	public static function getObject ($path, $option='auto') {
-		$file = self::getFileBox($path);
-		require_once($file->file);
+		$fileBox = self::getFileBox($path);
+		require_once($fileBox->getFile());
 		if ($option=='load')
 			return true;
-		//  check for class
-		$class = $file->class;
+		// check for class
+		$class = $fileBox->getClass();
 		// load file
 		if (!class_exists($class))
-			throw new CoreException('ClassNotFound',array('class'=>$class,'file'=>$file->file));
-		//  check for parent class
+			throw new CoreException('ClassNotFound',array('class'=>$class,'file'=>$fileBox->getFile()));
+		// check for parent class
 		$parentClass = null;
-		switch ($file->type) {
+		switch ($fileBox->getType()) {
 			case 'controllers': $parentClass = '\devmo\controllers\Controller'; break;
 			case 'views': $parentClass = '\devmo\libs\View'; break;
 			case 'daos': $parentClass = '\devmo\daos\Dao'; break;
 			case 'dtos': $parentClass = '\devmo\dtos\Dto'; break;
 		}
 		if ($parentClass && !class_exists($parentClass))
-			throw new CoreException('ClassNotFound',array('class'=>$parentClass,'file'=>$file->file));
+			throw new CoreException('ClassNotFound',array('class'=>$parentClass,'file'=>$fileBox->getFile()));
 		//  handle options
 		$obj = null;
 		switch ($option) {
@@ -135,9 +130,9 @@ class Core {
 				break;
 		}
 		if ($parentClass && !($obj instanceof $parentClass))
-			throw new CoreException('ClassNotController',array('class'=>$file->class,'file'=>$file->file));
+			throw new CoreException('ClassNotController',array('class'=>$fileBox->getClass(),'file'=>$fileBox->getFile()));
 		if (($obj instanceof Loader))
-			$obj->setFileBox($file);
+			$obj->setFileBox($fileBox);
 		return $obj;
 	}
 
@@ -318,20 +313,50 @@ class Config {
 }
 
 
-
-# pragma mark Box
 class Box {
 	public function __set ($name, $value) {
-		$setter = 'set'.ucfirst($name);
-    return $name && is_callable(array($this,$setter))
-			? $this->$setter($name,$value)
-			: $this->{$name} = $value;
+		return $this->{'set'.ucfirst($name)}($name,$value);
 	}
 	public function __get ($name) {
-		$getter = 'get'.ucfirst($name);
-    return $name && is_callable(array($this,$getter))
-			? $this->$getter()
-			: Devmo::getValue($name,$this);
+		return $this->{'get'.ucfirst($name)}();
+	}
+}
+
+
+class FileBox extends Box {
+	private $type;
+	private $class;
+	private $file;
+	private $context;
+	public function __construct(array $values) {
+		$this->setType($values['type']);
+		$this->setClass($values['class']);
+		$this->setFile($values['file']);
+		$this->setContext($values['context']);
+	}
+	public function setType ($type) {
+		$this->type = $type;
+	}
+	public function getType () {
+		return $this->type;
+	}
+	public function setClass ($class) {
+		$this->class = $class;
+	}
+	public function getClass () {
+		return $this->class;
+	}
+	public function setFile ($file) {
+		$this->file = $file;
+	}
+	public function getFile () {
+		return $this->file;
+	}
+	public function setContext ($context) {
+		$this->context = $context;
+	}
+	public function getContext () {
+		return $this->context;
 	}
 }
 

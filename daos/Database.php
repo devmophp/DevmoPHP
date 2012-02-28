@@ -200,9 +200,7 @@ class ResultSetDatabaseDao implements \Iterator, \Countable {
 		$this->result->free_result();
 	}
 
-	public function setDto (\devmo\dtos\Dto $dto) {
-		if (empty($dto) || !($dto instanceof \devmo\dtos\Dto))
-			throw new InvalidArgumentException('DTO');
+	public function setDto ($dto) {
 		$this->dto = $dto;
 		return $this;
 	}

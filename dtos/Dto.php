@@ -1,7 +1,7 @@
 <?php
 namespace devmo\dtos;
 
-abstract class Dto {
+abstract class Dto extends \devmo\libs\Box {
 	protected $id;
 
 	public function setId ($id) {

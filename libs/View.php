@@ -10,10 +10,10 @@
  */
 namespace devmo\libs;
 
-class View extends \devmo\libs\Box {
+class View {
 	private $parent;	//	ref to parent view object
 	private $template;	//	str	template file
-
+	private $tokens;
 
 	/**
 	 * Initializes class variables
@@ -24,16 +24,22 @@ class View extends \devmo\libs\Box {
 	public function __construct () {
 		$this->parent = null;
 		$this->template = null;
+		$this->tokens = new \stdClass;
 	}
 
 
   public function __set ($name, $value) {
 		if ($value===$this)
 			throw new DevmoException('Token Value Is Circular Reference');
-  	parent::__set($name,$value);
 		if (is_object($value) && $value instanceof View)
 			$value->parent = $this;
+		$this->set($name,$value);
   }
+
+
+	public function __get ($name) {
+		return $this->get($name);
+	}
 
 
 	/**
@@ -113,8 +119,8 @@ class View extends \devmo\libs\Box {
 	 * @param token name, token value
 	 * @return void
 	 */
-	public function setToken ($name, $value) {
-		$this->__set($name,$value);
+	public function set ($name, $value) {
+		$this->tokens->{$name} = $value;
 	}
 
 
@@ -127,8 +133,8 @@ class View extends \devmo\libs\Box {
 	 * @param token name
 	 * @return token value
 	 */
-	public function getToken ($name) {
-		return $this->__get($name);
+	public function get ($name) {
+		return \Devmo::getValue($name,$this->tokens);
 	}
 
 
@@ -144,7 +150,7 @@ class View extends \devmo\libs\Box {
 	public function setTokens ($tokens) {
 		if (is_array($tokens) || is_object($tokens)) {
 			foreach ($tokens as $k=>$v) {
-				$this->__set($k,$v);
+				$this->set($k,$v);
 			}
 		}
 	}
@@ -159,7 +165,7 @@ class View extends \devmo\libs\Box {
 	 * @return associative array of tokens
 	 */
 	public function getTokens () {
-		return $this->data;
+		return $this->tokens;
 	}
 
 } //	EOC
