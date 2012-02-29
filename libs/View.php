@@ -51,11 +51,6 @@ class View {
 	public function __toString () {
 		if (!$this->getTemplate())
 			throw new Error("Missing or Invalid Output File:".$this->getTemplate());
-		//	create variables
-		/*
-		if ($this->getTokens())
-			extract($this->getTokens(),EXTR_SKIP);
-		*/
 		//	execute view code and capture output
 		ob_start();
 		include($this->getTemplate());

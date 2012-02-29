@@ -1,1 +1,1 @@
-<?php echo $this->getToken('body') ?>
+<?php echo $this->get('body') ?>
