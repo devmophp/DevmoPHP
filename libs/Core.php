@@ -151,19 +151,23 @@ class Core {
 
 
 	public static function handleException (\Exception $e) {
+		// log it
+		Devmo::logError($e);
+		// display it
 		if ($e instanceof CoreException) {
 			echo self::handleCoreException($e);
 		} else {
-			Config::getDebug()
+			Config::isDebug()
 				? Devmo::debug($e->__toString(),'log entry')
 				: Devmo::debug($e->getMessage(),'See the error log for more details');
-			self::logException($e);
 		}
 	}
 
 
 	public static function handleCoreException (CoreException $e) {
-		if (Config::getDebug()) {
+		if (Config::isCli()) {
+			return Config::isDebug() ? (string)$e : $e->getMessage();
+		} else if (Config::isDebug()) {
 			$controller = self::getObject('devmo.controllers.Error','new');
 			$controller->setException($e);
 			$controller->setData($e->tokens);
@@ -178,12 +182,6 @@ class Core {
 		if (strstr($class,'\\'))
 			$class = str_replace(array('/','\\'),'.',$class);
 		self::getObject($class,'load');
-	}
-
-	public static function logException (\Exception $e) {
-		($logFile = Config::getErrorLog())
-			? error_log($e->__toString(),3,$logFile)
-			: error_log(preg_replace('=[\t'.PHP_EOL.']+=',' ',$e->__toString()),0);
 	}
 
 
@@ -229,10 +227,13 @@ class Config {
 	private static $requestedController = null;
 	private static $defaultController = null;
 	private static $defaultNamespace = null;
-	private static $debug = false;
 	private static $errorLogFile = null;
 	private static $request = null;
-
+	private static $debug = false;
+	private static $cli = false;
+	public static function init () {
+		self::$cli = (bool) Devmo::getValue('SHELL',$_SERVER,false);
+	}
 
 	# for application use
 	public static function addNamespacePathMapping ($namespace, $path, $default=false) {
@@ -241,34 +242,27 @@ class Config {
 		if ($default || (self::$defaultNamespace==null && $namespace!='devmo'))
 			self::$defaultNamespace = $namespace;
 	}
-
 	public static function addRequestControllerMapping ($pattern, $controller) {
 		self::$requestControllerMap[$pattern] = $controller;
 	}
-
 	public static function setDefaultNamespace ($namespace) {
 		self::$defaultNamespace = $namespace;
 	}
-
 	public static function setDefaultController ($controller) {
 		self::$defaultController = Core::formatPath($controller,'controllers');
 	}
-
 	public static function setRequestNotFoundController ($controller) {
 		self::$requestNotFoundController = Core::formatPath($controller,'controllers');
 	}
-
 	public static function setRequest ($request=null) {
 		if ($request && ($request = preg_replace('=/+=','/',$request)) && $request!='/') {
 			self::$request = $request;
 			self::$requestedController = Core::formatRequestToPath($request);
 		}
 	}
-
 	public static function setDebug ($debug=false) {
 		self::$debug = ($debug);
 	}
-
 	public static function setErrorLog ($file) {
 		self::$errorLogFile = $file;
 	}
@@ -302,8 +296,11 @@ class Config {
 	public static function getErrorLog () {
 		return self::$errorLogFile;
 	}
-	public static function getDebug () {
+	public static function isDebug () {
 		return self::$debug;
+	}
+	public static function isCli () {
+		return self::$cli;
 	}
 	public static function getDefaultNamespace () {
 		if (!self::$defaultNamespace)

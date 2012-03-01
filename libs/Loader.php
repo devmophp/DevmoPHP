@@ -32,10 +32,6 @@ class Loader {
   	return Core::getObject($path,$option);
   }
 
-	protected function getController ($path) {
-		return $this->get(Core::formatPath($path,'controllers',$this->fileBox->getContext()));
-	}
-
   protected function getView ($path=null, $tokens=null) {
   	if (!($this instanceof Controller))
 			throw new CoreException('ClassNotController',array('class'=>$this->fileBox->getClass(),'file'=>$this->fileBox->getFile()));
@@ -48,21 +44,5 @@ class Loader {
 			$view->setTokens($tokens);
   	return $view;
   }
-
-	protected function getDao ($path) {
-		return $this->get(Core::formatPath($path,'daos',$this->fileBox->getContext()));
-	}
-
-	protected function getDto ($path) {
-		return $this->get(Core::formatPath($path,'dtos',$this->fileBox->getContext()));
-	}
-
-	protected function getLibrary ($path) {
-		return $this->get(Core::formatPath($path,'libs',$this->fileBox->getContext()));
-	}
-
-	protected function getInclude ($path) {
-		return $this->get(Core::formatPath($path,'includes',$this->fileBox->getContext()),'load');
-	}
 
 }

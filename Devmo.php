@@ -27,8 +27,8 @@ class Devmo {
 	}
 
 	public static function debug ($obj, $text='DEBUG', $opt=FALSE) {
-		echo '<pre>'.PHP_EOL;
-		echo $text.PHP_EOL;
+		print Config::isCli() ? null : '<pre>'.PHP_EOL;
+		print PHP_EOL.$text.PHP_EOL;
 		switch ($opt) {
 			default:
 				print_r($obj);
@@ -48,9 +48,15 @@ class Devmo {
 				echo $obj->asXML();
 				break;
 		}
-		echo PHP_EOL.'</pre>';
+		print Config::isCli() ? null : PHP_EOL.'</pre>';
 	}
-	
+
+	public static function logError ($e) {
+		($logFile = Config::getErrorLog())
+			? error_log((string)$e,3,$logFile)
+			: error_log((string)$e,0);
+	}
+
 }
 
 // set default configs
