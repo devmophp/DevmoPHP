@@ -6,8 +6,8 @@ use \devmo\exceptions\Exception;
 use \devmo\exceptions\CoreException;
 use \devmo\exceptions\InvalidException;
 
-class Core {
 
+class Core {
 	public static function execute ($path=false, $data=null) {
 		// find controller
 		if (!($controller = $path) && Config::getRequestedController()) {
@@ -30,7 +30,6 @@ class Core {
 			throw new CoreException('ViewNotFound',array('controller'=>$controller));
 		return $view;
 	}
-
 
 	private static function executeController ($path, $data=null, $message=null) {
 		//  get controller object
@@ -58,7 +57,6 @@ class Core {
 			return $view;
 		}
 	}
-
 
 	public static function getFileBox ($path) {
 		// get directory map
@@ -91,7 +89,6 @@ class Core {
 		// return file box
 		return new FileBox(compact('type','class','file','context'));
 	}
-
 
 	public static function getObject ($path, $option='auto') {
 		$fileBox = self::getFileBox($path);
@@ -136,19 +133,18 @@ class Core {
 		return $obj;
 	}
 
-
 	public static function makeSafe ($value) {
 		if (is_array($value))
 			self::makeSafeSub($value);
 		return htmlentities(trim($value),ENT_NOQUOTES);
 	}
+
 	private static function makeSafeSub (&$hash) {
 		foreach ($hash as $k=>$v)
 			is_array($v)
 				? self::makeSafeSub($v)
 				: $hash[$k] = self::makeSafe($v);
 	}
-
 
 	public static function handleException (\Exception $e) {
 		// log it
@@ -163,7 +159,6 @@ class Core {
 		}
 	}
 
-
 	public static function handleCoreException (CoreException $e) {
 		if (Config::isCli()) {
 			return Config::isDebug() ? (string)$e : $e->getMessage();
@@ -177,13 +172,11 @@ class Core {
 		}
 	}
 
-
 	public static function loadClass ($class) {
 		if (strstr($class,'\\'))
 			$class = str_replace(array('/','\\'),'.',$class);
 		self::getObject($class,'load');
 	}
-
 
 	public static function formatPath ($path, $type, $context=null) {
 		if ($context && !strstr($path,'.'))
@@ -193,18 +186,13 @@ class Core {
 			: $path;
 	}
 
-
 	public static function formatRequestToPath ($request) {
 		preg_match('=(.*?)/?([^/]+$)=',$request,$matches);
 		return str_replace('/','.',$matches[1].'.controllers.'.str_replace(' ','',ucwords(preg_replace('/[\-\+]+/',' ',$matches[2]))));
 	}
-
 }
 
 
-
-
-# pragma mark Config
 class Config {
 	private static $typeDirectoryMap = array(
 			'controllers'=>'_controllers',
@@ -266,7 +254,6 @@ class Config {
 	public static function setErrorLog ($file) {
 		self::$errorLogFile = $file;
 	}
-
 
 	# for framework use
 	public static function getRequest () {
