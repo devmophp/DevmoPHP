@@ -187,8 +187,9 @@ class Core {
 	}
 
 	public static function formatRequestToPath ($request) {
-		preg_match('=(.*?)/?([^/]+$)=',$request,$matches);
-		return str_replace('/','.',$matches[1].'.controllers.'.str_replace(' ','',ucwords(preg_replace('/[\-\+]+/',' ',$matches[2]))));
+		return preg_match('=(.*?)/?([^/]+)/?$=',$request,$matches)
+				? str_replace('/','.',$matches[1].'.controllers.'.str_replace(' ','',ucwords(preg_replace('/[\-\+]+/',' ',$matches[2]))))
+				: false;
 	}
 }
 
