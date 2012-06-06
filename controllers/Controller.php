@@ -65,6 +65,10 @@ abstract class Controller extends \devmo\libs\Loader {
 			: $value;
 	}
 
+	protected function getValue ($key, $mixed, $default=false) {
+		return Devmo::getValue($key,$mixed,$default);
+	}
+
 	protected function getRequestController () {
 		return Config::getRequestedController()
 			? Config::getRequestedController()
@@ -81,6 +85,10 @@ abstract class Controller extends \devmo\libs\Loader {
 
 	protected function runRequest ($request, $args=null) {
 		return Core::execute(Core::formatRequestToPath($request),$args);
+	}
+
+	protected function debug ($mixed, $title=null, $option=null) {
+		Devmo::debug($mixed,$title,$option);
 	}
 
   abstract public function run (array $args=null);
