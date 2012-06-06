@@ -171,9 +171,10 @@ class Core {
 		$parts += array('path'=>null,'type'=>null,'class'=>null);
 		if ($parts['path']==null || $parts['path']=='.')
 			$parts['path'] = $context;
+		$type .= '.';
 		if ($parts['type']!=$type) {
 			$parts['path'] .= $parts['type'];
-			$parts['type'] = "{$type}.";
+			$parts['type'] = $type;
 		}
 		return $parts['path'].$parts['type'].$parts['class'];
 	}
