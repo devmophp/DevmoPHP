@@ -5,25 +5,14 @@ use devmo\libs\CoreException;
 use devmo\controllers\Controller;
 
 class Loader {
-	private $context = null;
 	private $fileBox = null;
 
   public function setFileBox (\devmo\libs\Box $fileBox) {
   	$this->fileBox = $fileBox;
   }
 
-  public function setContext ($context) {
-  	$this->context = $context;
-  }
-
   public function getContext () {
-  	return $this->context;
-  }
-
-  private function addContextToPath ($path) {
-  	return ($this->context && substr($path,0,1)!='/')
-  		? $this->context.$path
-  		: $path;
+  	return $this->fileBox->getContext();
   }
 
   protected function get ($path, $option='auto') {

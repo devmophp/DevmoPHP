@@ -11,13 +11,13 @@ namespace devmo\controllers;
 class Error extends \devmo\controllers\Controller {
 	public $exception;
 
-  public function run () {
+  public function run (array $args=null) {
 		// log it
     $message = "Error:";
-		foreach ($this->getData() as $k=>$v)
+		foreach ($args as $k=>$v)
 			$message .= " {$k}:{$v}";
     // build wrapper
-    $error = $this->getView("devmo.views.{$this->exception->name}Error",$this->getData());
+    $error = $this->getView("devmo.views.{$this->exception->name}Error",$args);
     $view = $this->getView('devmo.views.Error',array('body'=>$error,'trace'=>$this->exception->__toViewString()));
     $wrap = $this->runController('devmo.SiteWrapper',array('body'=>$view));
     return $wrap;

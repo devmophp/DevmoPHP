@@ -11,10 +11,10 @@ namespace devmo\controllers;
 
 class SiteWrapper extends \devmo\controllers\Controller {
 
-  public function run () {
-  	$view = $this->getView('devmo.SiteWrapper',$this->getData());
+  public function run (array $args=null) {
+  	$view = $this->getView('devmo.SiteWrapper',$args);
 		$view->poweredby = $this->runController('devmo.PoweredBy');
     return $view;
   }
-  
+
 }

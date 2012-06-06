@@ -33,6 +33,14 @@ div.header span span {
 	font: normal 11px arial;
 }
 </style>
-<div class="header"><span>you have problems<br /><span>(knowing is half the battle)</span></span></div>
-<div><?=$this->body?></div>
+<div class="header">
+	<span>
+		you have problems
+		<br />
+		<span>(but knowing helps ;)</span>
+	</span>
+</div>
+<div>
+	<?=$this->body?>
+</div>
 <pre class="trace"><?=$this->trace?></pre>

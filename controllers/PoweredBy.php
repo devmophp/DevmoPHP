@@ -11,8 +11,8 @@ namespace devmo\controllers;
 
 class PoweredBy extends \devmo\controllers\Controller {
 
-  public function run () {
+  public function run (array $args=null) {
     return $this->getView('devmo.PoweredBy');
   }
-  
+
 }

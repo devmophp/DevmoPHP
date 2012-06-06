@@ -8,7 +8,7 @@ use \devmo\exceptions\InvalidException;
 
 
 class Core {
-	public static function execute ($path=false, $data=null) {
+	public static function execute ($path=false, $args=null) {
 		// find controller
 		if (!($controller = $path) && Config::getRequestedController()) {
 			$controller = Config::getRequestedController();
@@ -26,36 +26,24 @@ class Core {
 			$controller = Config::getDefaultController();
 		}
 		//	get controller view
-		if (!$view = self::executeController($controller,$data))
+		if (!$view = self::executeController($controller,$args))
 			throw new CoreException('ViewNotFound',array('controller'=>$controller));
 		return $view;
 	}
 
-	private static function executeController ($path, $data=null, $message=null) {
+	private static function executeController ($path, $args=null, $message=null) {
 		//  get controller object
 		$controller = self::getObject($path,'new');
-		if ($data)
-			$controller->setData($data);
 		if ($message)
 			$controller->setMessage($message);
 		//	run controller
-		$view = $controller->run();
+		$view = $controller->run($args);
 		//  forward to next controller
 		if ($controller->getForward())
-			return self::executeController($controller->getForward(),$data,$message);
-		//  successful execution go to next
-		if ($view===true && $controller->getSuccess()) {
-			if ($controller->getSuccess()==$path)
-				throw new Exception('Success Controller Can Not Equal Self ['.$path.']');
-			return self::executeController($controller->getSuccess(),null,$controller->getMessage());
-			//  unsuccessful execution
-		} else if ($view===false && $controller->getFailure()) {
-			if ($controller->getFailure()==$path)
-				throw new Exception('Failure Controller Can Not Equal Self ['.$path.']');
-			return self::executeController($controller->getFailure(),null,$controller->getMessage());
-		} else if ($view instanceof View) {
+			return self::executeController($controller->getForward(),$args,$message);
+		// return only views
+		if ($view instanceof View)
 			return $view;
-		}
 	}
 
 	public static function getFileBox ($path) {
@@ -165,8 +153,7 @@ class Core {
 		} else if (Config::isDebug()) {
 			$controller = self::getObject('devmo.controllers.Error','new');
 			$controller->setException($e);
-			$controller->setData($e->tokens);
-			return $controller->run();
+			return $controller->run($e->tokens);
 		} else {
 			return self::execute(Config::getRequestNotFoundController())->getRoot();
 		}
@@ -179,11 +166,16 @@ class Core {
 	}
 
 	public static function formatPath ($path, $type, $context=null) {
-		if ($context && !strstr($path,'.'))
-			$path = $context.$path;
-		return !strstr($path,".{$type}.")
-			? preg_replace('=(.*?)([a-zA-Z0-9]+)$=','\1'.$type.'.\2',$path)
-			: $path;
+		if (!preg_match('/^(?P<path>.*?\.)?(?P<type>[^\.]+\.)?(?P<class>[^\.]+)$/',$path,$parts))
+			throw new InvalidException('path',$path);
+		$parts += array('path'=>null,'type'=>null,'class'=>null);
+		if ($parts['path']==null || $parts['path']=='.')
+			$parts['path'] = $context;
+		if ($parts['type']!=$type) {
+			$parts['path'] .= $parts['type'];
+			$parts['type'] = "{$type}.";
+		}
+		return $parts['path'].$parts['type'].$parts['class'];
 	}
 
 	public static function formatRequestToPath ($request) {

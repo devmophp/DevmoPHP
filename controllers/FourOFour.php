@@ -10,11 +10,11 @@
 namespace devmo\controllers;
 class FourOFour extends \devmo\controllers\Controller {
 
-  public function run () {
+  public function run (array $args=null) {
   	header("HTTP/1.0 404 Not Found");
     $view = $this->getView('SiteWrapper');
     $view->body = $this->getView();
     return $view;
   }
-  
+
 }
