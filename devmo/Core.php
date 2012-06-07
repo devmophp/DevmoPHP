@@ -1,8 +1,7 @@
 <?php
-namespace devmo\libs;
+namespace devmo;
 
 use \Devmo;
-use \devmo\exceptions\Exception;
 use \devmo\exceptions\CoreException;
 use \devmo\exceptions\InvalidException;
 
@@ -78,7 +77,7 @@ class Core {
 		return new FileBox(compact('type','class','file','context'));
 	}
 
-	public static function getObject ($path, $option='auto') {
+	public static function getObject ($path, $option='auto', $args=null) {
 		$fileBox = self::getFileBox($path);
 		require_once($fileBox->getFile());
 		if ($option=='load')
@@ -91,10 +90,10 @@ class Core {
 		// check for parent class
 		$parentClass = null;
 		switch ($fileBox->getType()) {
-			case 'controllers': $parentClass = '\devmo\controllers\Controller'; break;
-			case 'views': $parentClass = '\devmo\libs\View'; break;
-			case 'daos': $parentClass = '\devmo\daos\Dao'; break;
-			case 'dtos': $parentClass = '\devmo\dtos\Dto'; break;
+			case 'controllers': $parentClass = '\devmo\Controller'; break;
+			case 'views': $parentClass = '\devmo\View'; break;
+			case 'daos': $parentClass = '\devmo\Dao'; break;
+			case 'dtos': $parentClass = '\devmo\Dto'; break;
 		}
 		if ($parentClass && !class_exists($parentClass))
 			throw new CoreException('ClassNotFound',array('class'=>$parentClass,'file'=>$fileBox->getFile()));
@@ -108,10 +107,10 @@ class Core {
 					: new $class;
 				break;
 			case 'singleton':
-				$obj = $class::getInstance();
+				$obj = $class::getInstance($args);
 				break;
 			case 'new':
-				$obj = new $class;
+				$obj = new $class($args);
 				break;
 		}
 		if ($parentClass && !($obj instanceof $parentClass))
@@ -184,26 +183,28 @@ class Core {
 				? str_replace('/','.',$matches[1].'.controllers.'.str_replace(' ','',ucwords(preg_replace('/[\-\+]+/',' ',$matches[2]))))
 				: false;
 	}
-}
 
+}
 
 class Config {
 	private static $typeDirectoryMap = array(
+			'exceptions'=>'_exceptions',
 			'controllers'=>'_controllers',
+			'logic'=>'_logic',
+			'daos'=>'_daos',
+			'dtos'=>'_dtos',
 			'views'=>'_views',
 			'libs'=>'_libs',
-			'exceptions'=>'_exceptions',
-			'includes'=>'_incs',
-			'daos'=>'_daos',
-			'dtos'=>'_dtos');
+			'includes'=>'_incs');
 	private static $typeNamespacePathMap = array(
+			'exceptions'=>array(),
 			'controllers'=>array(),
+			'logic'=>array(),
+			'daos'=>array(),
+			'dtos'=>array(),
 			'views'=>array(),
 			'libs'=>array(),
-			'exceptions'=>array(),
-			'includes'=>array(),
-			'daos'=>array(),
-			'dtos'=>array());
+			'includes'=>array());
 	private static $requestControllerMap = array();
 	private static $requestNotFoundController = 'devmo.controllers.FourOFour';
 	private static $requestedController = null;
@@ -290,8 +291,16 @@ class Config {
 	}
 }
 
+class Object {
+	protected function debug ($mixed, $title=null, $option=null) {
+		Devmo::debug($mixed,$title,$option);
+	}
+	protected function getValue ($key, $mixed, $default=false) {
+		return Devmo::getValue($key,$mixed,$default);
+	}
+}
 
-class Box {
+class Box extends Object {
 	public function __set ($name, $value) {
 		return $this->{'set'.ucfirst($name)}($name,$value);
 	}
@@ -339,9 +348,281 @@ class FileBox extends Box {
 }
 
 
+class Loader extends Object {
+	private $fileBox = null;
+
+  public function setFileBox (\devmo\Box $fileBox) {
+  	$this->fileBox = $fileBox;
+  }
+
+  public function getContext () {
+  	return $this->fileBox->getContext();
+  }
+
+  protected function get ($path, $args=null, $option='auto') {
+		if ($path[0]=='.')
+			$path = $this->fileBox->getContext().substr($path,1);
+  	return Core::getObject($path,$option,$args);
+  }
+
+  protected function getView ($path=null, $tokens=null) {
+  	if (!($this instanceof \devmo\Controller))
+			throw new CoreException('ClassNotController',array('class'=>$this->fileBox->getClass(),'file'=>$this->fileBox->getFile()));
+  	if (!$path)
+  		$path = basename(str_replace('\\','/',$this->fileBox->getClass()));
+		$fileBox = Core::getFileBox(Core::formatPath($path,'views',$this->fileBox->getContext()));
+		$view = new \devmo\View();
+		$view->setTemplate($fileBox->file);
+		if ($tokens)
+			$view->setTokens($tokens);
+  	return $view;
+  }
+
+}
+
+abstract class Controller extends Loader {
+  protected $forward = null;
+  protected $do = null;
+	protected $message = null;
+  protected $ajax = false;
+
+	public function setAjax ($ajax) {
+		$this->ajax = $ajax;
+	}
+
+	public function isAjax () {
+		return $this->ajax;
+	}
+
+  public function setForward ($controller) {
+  	$this->forward = Core::formatPath($controller,'controllers',$this->getContext());
+  }
+
+  public function getForward () {
+    return $this->forward;
+  }
+
+  public function getDo () {
+    return $this->do;
+  }
+
+  public function setMessage ($message) {
+  	$this->message = $message;
+  }
+
+  public function getMessage () {
+  	return $this->message;
+  }
+
+	protected function getGet ($name, $default=false, $makeSafe=true) {
+		return (($value = $this->getValue($name,$_GET,$default)) && $makeSafe)
+			? Core::makeSafe($value)
+			: $value;
+	}
+
+	protected function getPost ($name, $default=false, $makeSafe=true) {
+		return (($value = $this->getValue($name,$_POST,$default)) && $makeSafe)
+			? Core::makeSafe($value)
+			: $value;
+	}
+
+	protected function getSession ($name, $default=false) {
+		if (!isset($_SESSION))
+			throw new \devmo\exceptions\Exception('session does not exist');
+		return $this->getValue($name,$_SESSION,$default);
+	}
+
+	protected function getRequest ($name, $default=false, $makeSafe=true) {
+		return (($value = $this->getValue($name,$_REQUEST,$default)) && $makeSafe)
+			? Core::makeSafe($value)
+			: $value;
+	}
+
+	protected function getRequestController () {
+		return Config::getRequestedController()
+			? Config::getRequestedController()
+			: Config::getDefaultController();
+	}
+
+	protected function getServer ($name, $default=false) {
+		return $this->getValue($name,$_SERVER,$default);
+	}
+
+  protected function runController ($controller, $args=null) {
+  	return Core::execute(Core::formatPath($controller,'controllers',$this->getContext()),$args);
+  }
+
+	protected function runRequest ($request, $args=null) {
+		return Core::execute(Core::formatRequestToPath($request),$args);
+	}
+
+  abstract public function run (array $args=null);
+}
+
+
+class View extends Object {
+	private $parent;	//	ref to parent view object
+	private $template;	//	str	template file
+	private $tokens;
+
+	public function __construct () {
+		$this->parent = null;
+		$this->template = null;
+		$this->tokens = new \stdClass;
+	}
+
+  public function __set ($name, $value) {
+		if ($value===$this)
+			throw new DevmoException('Token Value Is Circular Reference');
+		if (is_object($value) && $value instanceof View)
+			$value->parent = $this;
+		$this->set($name,$value);
+  }
+
+	public function __get ($name) {
+		return $this->get($name);
+	}
+
+	public function __toString () {
+		if (!$this->getTemplate())
+			throw new Error("Missing or Invalid Output File:".$this->getTemplate());
+		//	execute view code and capture output
+		ob_start();
+		include($this->getTemplate());
+		$output = ob_get_contents();
+		ob_end_clean();
+		//	return executed code as string
+		return $output;
+	}
+
+	public function getRoot () {
+		return $this->parent
+			? $this->parent->getRoot()
+			: $this;
+	}
+
+	public function setTemplate ($template) {
+		//	error checks
+		if (!$template)
+			throw new Error('Missing Template');
+		//	set template
+		$this->template = $template;
+	}
+
+	public function getTemplate () {
+		return $this->template;
+	}
+
+	public function set ($name, $value) {
+		$this->tokens->{$name} = $value;
+	}
+
+	public function get ($name) {
+		return $this->getValue($name,$this->tokens);
+	}
+
+	public function setTokens ($tokens) {
+		if (is_array($tokens) || is_object($tokens)) {
+			foreach ($tokens as $k=>$v) {
+				$this->set($k,$v);
+			}
+		}
+	}
+
+	public function getTokens () {
+		return $this->tokens;
+	}
+
+}
+
+
+abstract class Logic extends Loader {}
+
+
+abstract class Dao {}
+
+
+abstract class Dto extends \devmo\Box {
+	protected $id;
+	public function __construct ($record=null) {
+		if ($record!==null) {
+			if ($record!=null && !(is_object($record) || is_array($record)))
+				throw new \devmo\exceptions\Exception('record is not iterable');
+			foreach ($this as $k=>$v)
+				$this->{$k} = $this->getValue($k,$record);
+		}
+	}
+	public function setId ($id) {
+		return ($this->id = $id);
+	}
+	public function getId () {
+		return $this->id;
+	}
+}
+
+
+class Exception extends \LogicException {
+  private $path;
+  private $info;
+
+  public function __construct ($text, $path=null) {
+    $this->path = $path;
+    $this->extra = null;
+    parent::__construct($text);
+  }
+
+  public function getPath () {
+    return $this->path;
+  }
+
+  public function setInfo ($info) {
+    $this->info = $info;
+  }
+
+  public function __toString () {
+    $err = "What: ".$this->getMessage()
+				 . PHP_EOL."When: ".date('Y-m-d H:m:s')
+         .($this->path ? PHP_EOL."Path: {$this->path}" : null)
+         .($this->info ? PHP_EOL."Info: {$this->info}" : null)
+				 .PHP_EOL."Where: {$this->file}:{$this->line} [{$this->code}]";
+    foreach ($this->getTrace() as $i=>$x) {
+      $err .= PHP_EOL
+           .(isset($x['file'])?$x['file']:null)
+           .(isset($x['line'])?":{$x['line']} ":" ")
+           .(isset($x['class'])?$x['class']:null)
+           .(isset($x['type'])?$x['type']:null)
+           .(isset($x['function'])?$x['function']:null);
+    }
+		$err .= PHP_EOL;
+    return $err;
+  }
+
+  public function __toViewString () {
+    $err = "What: ".$this->getMessage()
+				 . PHP_EOL."When: ".date('Y-m-d H:m:s')
+         .($this->path ? PHP_EOL."Path: {$this->path}" : null)
+         .($this->info ? PHP_EOL."Info: {$this->info}" : null)
+				 .PHP_EOL."Where: {$this->file}:{$this->line} [{$this->code}]";
+    foreach ($this->getTrace() as $i=>$x) {
+			if (strpos($x['class'],'devmo\\')===0)
+				continue;
+      $err .= PHP_EOL
+           .(isset($x['file'])?$x['file']:null)
+           .(isset($x['line'])?":{$x['line']} ":" ")
+           .(isset($x['class'])?$x['class']:null)
+           .(isset($x['type'])?$x['type']:null)
+           .(isset($x['function'])?$x['function']:null);
+    }
+		$err .= PHP_EOL;
+    return $err;
+  }
+
+}
+
+
 // check for magic quotes
 if (get_magic_quotes_gpc())
 	die("Magic Quotes Config is On... exiting.");
 // set default exception handler
-set_exception_handler(array('\devmo\libs\Core','handleException'));
-spl_autoload_register(array('\devmo\libs\Core','loadClass'));
+set_exception_handler(array('\devmo\Core','handleException'));
+spl_autoload_register(array('\devmo\Core','loadClass'));

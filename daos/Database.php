@@ -10,7 +10,7 @@ use \InvalidArgumentException;
  * @author Dan Wager
  * @version 1.0
  */
-class Database extends Dao {
+class Database extends \devmo\Dao {
 	private $host;
 	private $name;
 	private $user;
@@ -92,7 +92,9 @@ class Database extends Dao {
 	 * @param mixed $sql
 	 * @return void
 	 */
-	protected function query ($sql, $add=null) {
+	protected function query ($sql, $add=null, $debug=false) {
+		if ($debug)
+			\Devmo::debug($sql,'Database::query::sql');
 		$dbh = DatabaseBox::getDbh($this->dbk);
 		if (!$result = $dbh->query($sql))
 			throw new CoreException('Database',array('errorno'=>$dbh->errno,'error'=>$dbh->error.PHP_EOL.preg_replace('=\s+=',' ',$sql)));
@@ -100,7 +102,7 @@ class Database extends Dao {
 			return new ResultSetDatabaseDao($result);
 		if ($add) {
 			$id = DatabaseBox::getDbh($this->dbk)->insert_id;
-			if ($add instanceof \devmo\dtos\Dto)
+			if ($add instanceof \devmo\Dto)
 				$add->setId($id);
 			return $id;
 		}

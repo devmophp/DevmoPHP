@@ -1,4 +1,5 @@
 <?php
+namespace devmo\controllers;
 /**
  * Default base controller for creating the wrapper around errors
  *
@@ -7,7 +8,6 @@
  * @copyright Copyright (c) 2007 Devmo
  * @version 1.0
  */
-namespace devmo\controllers;
 class Error extends \devmo\controllers\Controller {
 	public $exception;
 

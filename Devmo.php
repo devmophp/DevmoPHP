@@ -3,11 +3,11 @@
 if (!defined('DEVMO_PATH'))
 	define('DEVMO_PATH',preg_replace('=^(.+)/[^/]+$=','\1',__FILE__));
 // require core classes
-require(DEVMO_PATH."/libs/Core.php");
+require(DEVMO_PATH."/devmo/Core.php");
 
 // uses
-use \devmo\libs\Core;
-use \devmo\libs\Config;
+use \devmo\Core;
+use \devmo\Config;
 
 class Devmo {
 
@@ -31,18 +31,18 @@ class Devmo {
 		print PHP_EOL.$text.PHP_EOL;
 		switch ($opt) {
 			default:
-				print_r($obj);
+				var_export($obj);
 				break;
 			case 'fatal':
-				print_r($obj);
+				var_export($obj);
 				exit;
 				break;
 			case 'trace':
 				debug_print_backtrace();
-				print_r($obj);
+				var_export($obj);
 				break;
 			case 'obj':
-				print_r($obj);
+				var_export($obj);
 				break;
 			case 'xml':
 				echo $obj->asXML();

@@ -1,4 +1,3 @@
 <?php
 namespace devmo\daos;
-
-abstract class Dao {}
+abstract class Dao extends \devmo\Dao {}
