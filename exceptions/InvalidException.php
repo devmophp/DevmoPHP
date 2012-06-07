@@ -2,24 +2,25 @@
 namespace devmo\exceptions;
 
 class InvalidException extends \devmo\exceptions\Exception {
-  private $what;
   private $field;
+  private $label;
 
-  public function __construct ($what, $value=null, $field=null) {
-    $this->what = $what;
+  public function __construct ($field, $value=null, $label=null) {
     $this->field = $field;
-    parent::__construct(($value ? "Invalid Value Found For {$what}".(\devmo\Config::isDebug()?":{$value}":null) : "Missing Value For {$what}"));
+    $this->label = $label ?: $field;
+    parent::__construct(($value ? "Invalid value found for: {$this->label}".(\devmo\Config::isDebug()?":{$value}":null) : "Missing value for: {$this->label}"));
   }
-
-	public function getWhat () {
-		return $this->what;
-	}
-
-	public function setField ($field) {
-		$this->field = $field;
-	}
 
 	public function getField () {
 		return $this->field;
 	}
+
+	public function getLabel () {
+		return $this->label;
+	}
+
+	public function setLabel ($label) {
+		$this->label = $label;
+	}
+
 }
