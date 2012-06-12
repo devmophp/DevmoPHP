@@ -31,18 +31,18 @@ class Devmo {
 		print PHP_EOL.$text.PHP_EOL;
 		switch ($opt) {
 			default:
-				var_export($obj);
+				print_r($obj);
 				break;
 			case 'fatal':
-				var_export($obj);
+				print_r($obj);
 				exit;
 				break;
 			case 'trace':
 				debug_print_backtrace();
-				var_export($obj);
+				print_r($obj);
 				break;
 			case 'obj':
-				var_export($obj);
+				print_r($obj);
 				break;
 			case 'xml':
 				echo $obj->asXML();
