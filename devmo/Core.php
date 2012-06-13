@@ -184,6 +184,14 @@ class Core {
 				: false;
 	}
 
+	public static function formatControllerToRequest ($controller) {
+		return preg_replace('='.Config::getRequest().'$=','',Devmo::getValue('PHP_SELF',$_SERVER))
+				.preg_replace(
+						array('/^'.Config::getDefaultNamespace().'/','/controller\./','/\.+/'),
+						array('','','/'),
+						$controller);
+	}
+
 }
 
 class Config {
@@ -454,6 +462,25 @@ abstract class Controller extends Loader {
 
 	protected function runRequest ($request, $args=null) {
 		return Core::execute(Core::formatRequestToPath($request),$args);
+	}
+
+	protected function formatRequest ($controller) {
+		return Core::formatControllerToRequest(Core::formatPath($controller,'controller',$this->getContext()));
+	}
+
+	protected function redirect ($controller, array $get=null) {
+		$url = $this->formatRequest($controller);
+		if (count($get)>0) {
+			$url .= '?';
+			foreach ($get as $k=>$v) {
+				$url .= '&'.urlencode($k).'='.urlencode($v);
+			}
+		}
+		$view = $this->getView('devmo.HttpRaw');
+		$view->code = 200;
+		$view->headers = array("Location: {$url}");
+		print $view;
+		exit;
 	}
 
   abstract public function run (array $args=null);

@@ -233,6 +233,10 @@ class ResultSetDatabaseDao implements \Iterator, \Countable {
 		return $this->getNumRecords();
 	}
 
+	function getFields () {
+		return $this->result->fetch_fields();
+	}
+
 	function getValue () {
 		if ($x = $this->result->fetch_array())
 			return $x[0];
