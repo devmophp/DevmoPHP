@@ -121,16 +121,14 @@ class Core {
 	}
 
 	public static function makeSafe ($value) {
-		if (is_array($value))
-			self::makeSafeSub($value);
-		return htmlentities(trim($value),ENT_NOQUOTES);
-	}
-
-	private static function makeSafeSub (&$hash) {
-		foreach ($hash as $k=>$v)
-			is_array($v)
-				? self::makeSafeSub($v)
-				: $hash[$k] = self::makeSafe($v);
+		if (is_array($value)) {
+			foreach ($value as $k=>$v) {
+				$value[$k] = self::makeSafe($v);
+			}
+			return $value;
+		} else {
+			return htmlentities(trim($value),ENT_NOQUOTES);
+		}
 	}
 
 	public static function handleException (\Exception $e) {
@@ -232,6 +230,11 @@ class Config {
 			self::$typeNamespacePathMap[$k][$namespace] = $path;
 		if ($default || (self::$defaultNamespace==null && $namespace!='devmo'))
 			self::$defaultNamespace = $namespace;
+	}
+	public static function getPathForNamespace ($namespace, $type='controllers') {
+		if (!isset(self::$typeNamespacePathMap[$type]))
+			throw new InvalidException('Path Type',$type);
+		return self::$typeNamespacePathMap[$type][$namespace];
 	}
 	public static function addRequestControllerMapping ($pattern, $controller) {
 		self::$requestControllerMap[$pattern] = $controller;
@@ -464,21 +467,22 @@ abstract class Controller extends Loader {
 		return Core::execute(Core::formatRequestToPath($request),$args);
 	}
 
-	protected function formatRequest ($controller) {
-		return Core::formatControllerToRequest(Core::formatPath($controller,'controller',$this->getContext()));
+	protected function formatRequest ($controller, array $get=null) {
+		$request = Core::formatControllerToRequest(Core::formatPath($controller,'controller',$this->getContext()));
+		if (count($get)>0) {
+			$request .= '?';
+			foreach ($get as $k=>$v) {
+				$request .= '&'.urlencode($k).'='.urlencode($v);
+			}
+		}
+		return $request;
 	}
 
 	protected function redirect ($controller, array $get=null) {
-		$url = $this->formatRequest($controller);
-		if (count($get)>0) {
-			$url .= '?';
-			foreach ($get as $k=>$v) {
-				$url .= '&'.urlencode($k).'='.urlencode($v);
-			}
-		}
+		$request = $this->formatRequest($controller,$get);
 		$view = $this->getView('devmo.HttpRaw');
 		$view->code = 200;
-		$view->headers = array("Location: {$url}");
+		$view->headers = array("Location: {$request}");
 		print $view;
 		exit;
 	}
@@ -578,7 +582,9 @@ abstract class Dto extends \devmo\Box {
 			foreach ($this as $k=>$v)
 				$this->{$k} = $this->getValue($k,$record);
 		}
+		$this->init();
 	}
+	protected function init () {}
 	public function setId ($id) {
 		return ($this->id = $id);
 	}
@@ -593,9 +599,9 @@ class Exception extends \LogicException {
   private $info;
 
   public function __construct ($text, $path=null) {
+    parent::__construct($text);
     $this->path = $path;
     $this->extra = null;
-    parent::__construct($text);
   }
 
   public function getPath () {
@@ -607,40 +613,36 @@ class Exception extends \LogicException {
   }
 
   public function __toString () {
-    $err = "What: ".$this->getMessage()
-				 . PHP_EOL."When: ".date('Y-m-d H:m:s')
-         .($this->path ? PHP_EOL."Path: {$this->path}" : null)
-         .($this->info ? PHP_EOL."Info: {$this->info}" : null)
-				 .PHP_EOL."Where: {$this->file}:{$this->line} [{$this->code}]";
+		$err = "What: ".$this->getMessage()
+				.PHP_EOL."When: ".date('Y-m-d H:m:s')
+				.($this->path ? PHP_EOL."Path: {$this->path}" : null)
+				.($this->info ? PHP_EOL."Info: {$this->info}" : null)
+				.PHP_EOL."Where: {$this->file}:{$this->line}";
     foreach ($this->getTrace() as $i=>$x) {
       $err .= PHP_EOL
-           .(isset($x['file'])?$x['file']:null)
-           .(isset($x['line'])?":{$x['line']} ":" ")
-           .(isset($x['class'])?$x['class']:null)
-           .(isset($x['type'])?$x['type']:null)
-           .(isset($x['function'])?$x['function']:null);
+					.(isset($x['file'])?"{$x['file']}:{$x['line']}":null)
+					.(isset($x['class'])?" {$x['class']}{$x['type']}":null)
+					.(isset($x['function'])?$x['function'].'('.implode(', ',$x['args']).') ':null);
     }
 		$err .= PHP_EOL;
     return $err;
   }
 
   public function __toViewString () {
-    $err = "What: ".$this->getMessage()
-				 . PHP_EOL."When: ".date('Y-m-d H:m:s')
-         .($this->path ? PHP_EOL."Path: {$this->path}" : null)
-         .($this->info ? PHP_EOL."Info: {$this->info}" : null)
-				 .PHP_EOL."Where: {$this->file}:{$this->line} [{$this->code}]";
-    foreach ($this->getTrace() as $i=>$x) {
-			if (strpos($x['class'],'devmo\\')===0)
-				continue;
-      $err .= PHP_EOL
-           .(isset($x['file'])?$x['file']:null)
-           .(isset($x['line'])?":{$x['line']} ":" ")
-           .(isset($x['class'])?$x['class']:null)
-           .(isset($x['type'])?$x['type']:null)
-           .(isset($x['function'])?$x['function']:null);
-    }
-		$err .= PHP_EOL;
+		$err = "What: ".$this->getMessage()
+				.PHP_EOL."When: ".date('Y-m-d H:m:s')
+				.($this->path ? PHP_EOL."Path: {$this->path}" : null)
+				.($this->info ? PHP_EOL."Info: {$this->info}" : null)
+				.PHP_EOL."Where: ";
+		$devmoPath = Config::getPathForNamespace('devmo');
+		foreach ($this->getTrace() as $x) {
+			if (!preg_match("=^{$devmoPath}=",$x['file'])) {
+				$err .= (isset($x['file'])?"{$x['file']}:{$x['line']}":null)
+						 .(isset($x['class'])?" {$x['class']}{$x['type']}":null)
+						 .(isset($x['function'])?$x['function'].'('.implode(', ',$x['args']).') ':null);
+				break;
+			}
+		}
     return $err;
   }
 

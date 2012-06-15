@@ -245,6 +245,7 @@ class ResultSetDatabaseDao implements \Iterator, \Countable {
 
 	function getList () {
 		$this->rewind();
+		$list = array();
 		while ($x = $this->result->fetch_array())
 			$list[] = $x[0];
 		$this->rewind();
