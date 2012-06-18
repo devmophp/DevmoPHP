@@ -570,7 +570,7 @@ class View extends Object {
 abstract class Logic extends Loader {}
 
 
-abstract class Dao {}
+abstract class Dao extends Object {}
 
 
 abstract class Dto extends \devmo\Box {
