@@ -94,7 +94,7 @@ class Database extends \devmo\Dao {
 	 */
 	protected function query ($sql, $add=null, $debug=false) {
 		if ($debug)
-			\Devmo::debug($sql,'Database::query::sql');
+			self::debug($sql,'Database::query::sql');
 		$dbh = DatabaseBox::getDbh($this->dbk);
 		if (!$result = $dbh->query($sql))
 			throw new CoreException('Database',array('errorno'=>$dbh->errno,'error'=>$dbh->error.PHP_EOL.preg_replace('=\s+=',' ',$sql)));

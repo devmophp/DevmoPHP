@@ -303,10 +303,13 @@ class Config {
 }
 
 class Object {
-	protected function debug ($mixed, $title=null, $option=null) {
+	public function __toString () {
+		return 'Object:\\'.get_class($this);
+	}
+	protected static function debug ($mixed, $title=null, $option=null) {
 		Devmo::debug($mixed,$title,$option);
 	}
-	protected function getValue ($key, $mixed, $default=false) {
+	protected static function getValue ($key, $mixed, $default=false) {
 		return Devmo::getValue($key,$mixed,$default);
 	}
 }
