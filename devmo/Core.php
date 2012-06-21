@@ -159,6 +159,8 @@ class Core {
 	public static function loadClass ($class) {
 		if (strstr($class,'\\'))
 			$class = str_replace(array('/','\\'),'.',$class);
+		if (substr($class,0,1)=='.')
+			$class = substr($class,1);
 		self::getObject($class,'load');
 	}
 
