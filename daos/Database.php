@@ -190,6 +190,7 @@ class ResultSetDatabaseDao implements \Iterator, \Countable {
 	private $dto = '\stdClass';
 	private $result = null;
 	private $position = 0;
+	private $count = 0;
 
 	public function __construct ($result) {
 		if (!($result instanceof \mysqli_result))
@@ -207,9 +208,14 @@ class ResultSetDatabaseDao implements \Iterator, \Countable {
 		return $this;
 	}
 
+	public function setCount ($count) {
+		$this->count = $count;
+		return $this;
+	}
+
 	function rewind () {
 		$this->position = 0;
-		if ($this->getNumRecords()>0)
+		if ($this->count()>0)
 			$this->result->data_seek($this->position);
 	}
 
@@ -230,7 +236,9 @@ class ResultSetDatabaseDao implements \Iterator, \Countable {
 	}
 
 	public function count () {
-		return $this->getNumRecords();
+		if (!$this->count)
+			$this->count = empty($this->result->num_rows) ? 0 : $this->result->num_rows;
+		return $this->count;
 	}
 
 	function getFields () {
@@ -270,10 +278,6 @@ class ResultSetDatabaseDao implements \Iterator, \Countable {
 		while ($x = $this->result->fetch_object($this->dto))
 			$objs[] = $x;
 		return $objs;
-	}
-
-	public function getNumRecords () {
-		return (empty($this->result->num_rows) ? 0 : $this->result->num_rows);
 	}
 
 }
