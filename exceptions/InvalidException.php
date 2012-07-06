@@ -5,7 +5,7 @@ class InvalidException extends \devmo\exceptions\Exception {
   private $label;
   public function __construct ($field, $value=null, $label=null) {
     $this->field = $field;
-    $this->label = $label ?: $field;
+    $this->label = $label ?: ucfirst(preg_replace(array('/([A-Z]{1})/','/ Id/'),array(' \1',''),$field));
     parent::__construct(($value ? "Invalid {$this->label}".(\devmo\Config::isDebug()?" [{$value}]":null) : "Missing {$this->label}")." ({$this->file}:{$this->line})");
   }
 	public function getField () {
