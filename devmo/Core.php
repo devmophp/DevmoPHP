@@ -131,6 +131,14 @@ class Core {
 		}
 	}
 
+	public static function handleError ($number, $message, $file=null, $line=null, array $context=null) {
+		//256	E_USER_ERROR	512	E_USER_WARNING	1024	E_USER_NOTICE
+		// log it
+		Devmo::logError("Error [{$number}] {$message} file:{$file}:{$line}\n");
+		// use default error handler for everything else
+		return false;
+	}
+
 	public static function handleException (\Exception $e) {
 		// log it
 		Devmo::logError($e);
@@ -187,7 +195,7 @@ class Core {
 	public static function formatControllerToRequest ($controller) {
 		return preg_replace('='.Config::getRequest().'$=','',Devmo::getValue('PHP_SELF',$_SERVER))
 				.preg_replace(
-						array('/^'.Config::getDefaultNamespace().'/','/controller\./','/\.+/'),
+						array('/^'.Config::getDefaultNamespace().'/','/controllers?\./','/\.+/'),
 						array('','','/'),
 						$controller);
 	}
@@ -331,11 +339,13 @@ class FileBox extends Box {
 	private $class;
 	private $file;
 	private $context;
+	private $path;
 	public function __construct(array $values) {
 		$this->setType($values['type']);
 		$this->setClass($values['class']);
 		$this->setFile($values['file']);
 		$this->setContext($values['context']);
+		$this->setPath(trim(str_replace('\\','.',$values['class']),'.'));
 	}
 	public function setType ($type) {
 		$this->type = $type;
@@ -361,37 +371,38 @@ class FileBox extends Box {
 	public function getContext () {
 		return $this->context;
 	}
+	public function setPath ($path) {
+		$this->path = $path;
+	}
+	public function getPath () {
+		return $this->path;
+	}
 }
 
 
 class Loader extends Object {
 	private $fileBox = null;
 
-  public function setFileBox (\devmo\Box $fileBox) {
+  public function setFileBox (\devmo\FileBox $fileBox) {
   	$this->fileBox = $fileBox;
   }
+
+	protected function getFileBox () {
+		return $this->fileBox;
+	}
 
   public function getContext () {
   	return $this->fileBox->getContext();
   }
 
+	protected function getPath () {
+		return $this->fileBox->getPath();
+	}
+
   protected function get ($path, $args=null, $option='auto') {
 		if ($path[0]=='.')
 			$path = $this->fileBox->getContext().substr($path,1);
   	return Core::getObject($path,$option,$args);
-  }
-
-  protected function getView ($path=null, $tokens=null) {
-  	if (!($this instanceof \devmo\Controller))
-			throw new CoreException('ClassNotController',array('class'=>$this->fileBox->getClass(),'file'=>$this->fileBox->getFile()));
-  	if (!$path)
-  		$path = basename(str_replace('\\','/',$this->fileBox->getClass()));
-		$fileBox = Core::getFileBox(Core::formatPath($path,'views',$this->fileBox->getContext()));
-		$view = new \devmo\View();
-		$view->setTemplate($fileBox->file);
-		if ($tokens)
-			$view->setTokens($tokens);
-  	return $view;
   }
 
 }
@@ -428,6 +439,19 @@ abstract class Controller extends Loader {
 
   public function getMessage () {
   	return $this->message;
+  }
+
+  protected function getView ($path=null, $tokens=null) {
+		if (!($this instanceof \devmo\Controller))
+			throw new CoreException('ClassNotController',array('class'=>$this->getFileBox()->getClass(),'file'=>$this->getFileBox()->getFile()));
+		if (!$path)
+			$path = basename(str_replace('\\','/',$this->getFileBox()->getClass()));
+		$fileBox = Core::getFileBox(Core::formatPath($path,'views',$this->getFileBox()->getContext()));
+		$view = new \devmo\View();
+		$view->setTemplate($fileBox->file);
+		if ($tokens)
+			$view->setTokens($tokens);
+		return $view;
   }
 
 	protected function getGet ($name, $default=false, $makeSafe=true) {
@@ -472,8 +496,10 @@ abstract class Controller extends Loader {
 		return Core::execute(Core::formatRequestToPath($request),$args);
 	}
 
-	protected function formatRequest ($controller, array $get=null) {
-		$request = Core::formatControllerToRequest(Core::formatPath($controller,'controller',$this->getContext()));
+	protected function formatRequest ($controller=null, array $get=null) {
+		$request = $controller===null
+				? Core::formatControllerToRequest($this->getPath())
+				: Core::formatControllerToRequest(Core::formatPath($controller,'controller',$this->getContext()));
 		if (count($get)>0) {
 			$request .= '?';
 			foreach ($get as $k=>$v) {
@@ -524,7 +550,11 @@ class View extends Object {
 			throw new Error("Missing or Invalid Output File:".$this->getTemplate());
 		//	execute view code and capture output
 		ob_start();
-		include($this->getTemplate());
+		try {
+			include($this->getTemplate());
+		} catch (\Exception $e) {
+			Core::handleException($e);
+		}
 		$output = ob_get_contents();
 		ob_end_clean();
 		//	return executed code as string
@@ -624,10 +654,20 @@ class Exception extends \LogicException {
 				.($this->info ? PHP_EOL."Info: {$this->info}" : null)
 				.PHP_EOL."Where: {$this->file}:{$this->line}";
     foreach ($this->getTrace() as $i=>$x) {
+			$args = "";
+			foreach ($x['args'] as $xa) {
+				if (is_array($xa)) {
+					$args .= ($args?',':null).'array';
+				} else if (is_object($xa)) {
+					$args .= ($args?',':null).get_class($xa);
+				} else {
+					$args .= ($args?',':null).$xa;
+				}
+			}
       $err .= PHP_EOL
 					.(isset($x['file'])?"{$x['file']}:{$x['line']}":null)
 					.(isset($x['class'])?" {$x['class']}{$x['type']}":null)
-					.(isset($x['function'])?$x['function'].'('.implode(', ',$x['args']).') ':null);
+					.(isset($x['function'])?$x['function'].'('.$args.') ':null);
     }
 		$err .= PHP_EOL;
     return $err;
@@ -658,5 +698,6 @@ class Exception extends \LogicException {
 if (get_magic_quotes_gpc())
 	die("Magic Quotes Config is On... exiting.");
 // set default exception handler
+set_error_handler(array('\devmo\Core','handleError'));
 set_exception_handler(array('\devmo\Core','handleException'));
 spl_autoload_register(array('\devmo\Core','loadClass'));
