@@ -1,6 +1,6 @@
 <html>
   <head>
-    <title>Powered by Devmo</title>
+    <title><?=$this->title?></title>
     <style type="text/css">
       body {
         background-color: white;

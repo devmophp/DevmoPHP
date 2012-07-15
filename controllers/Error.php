@@ -19,7 +19,7 @@ class Error extends \devmo\controllers\Controller {
     // build wrapper
     $error = $this->getView("devmo.views.{$this->exception->name}Error",$args);
     $view = $this->getView('devmo.views.Error',array('body'=>$error,'trace'=>$this->exception->__toViewString()));
-    $wrap = $this->runController('devmo.SiteWrapper',array('body'=>$view));
+    $wrap = $this->runController('devmo.SiteWrapper',array('title'=>'Problems!','body'=>$view));
     return $wrap;
   }
 

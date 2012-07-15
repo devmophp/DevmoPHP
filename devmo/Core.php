@@ -316,11 +316,39 @@ class Object {
 	public function __toString () {
 		return 'Object:\\'.get_class($this);
 	}
-	protected static function debug ($mixed, $title=null, $option=null) {
-		Devmo::debug($mixed,$title,$option);
+	public static function debug ($mixed, $title=null, $option=null) {
+		print Config::isCli() ? null : '<pre>'.PHP_EOL;
+		print PHP_EOL.$title.PHP_EOL;
+		switch ($mixed) {
+			default:
+				print_r($mixed);
+				break;
+			case 'fatal':
+				print_r($mixed);
+				exit;
+				break;
+			case 'trace':
+				debug_print_backtrace();
+				print_r($mixed);
+				break;
+			case 'obj':
+				print_r($mixed);
+				break;
+			case 'xml':
+				echo $mixed->asXML();
+				break;
+		}
+		print Config::isCli() ? null : PHP_EOL.'</pre>';
 	}
-	protected static function getValue ($key, $mixed, $default=false) {
-		return Devmo::getValue($key,$mixed,$default);
+	public static function getValue ($needle, $haystack, $default=false) {
+		if (is_array($haystack))
+			return isset($haystack[$needle])
+				? $haystack[$needle]
+				: $default;
+		if (is_object($haystack))
+			return isset($haystack->{$needle})
+				? $haystack->{$needle}
+				: $default;
 	}
 }
 
@@ -442,16 +470,16 @@ abstract class Controller extends Loader {
   }
 
   protected function getView ($path=null, $tokens=null) {
-		if (!($this instanceof \devmo\Controller))
+  	if (!($this instanceof \devmo\Controller))
 			throw new CoreException('ClassNotController',array('class'=>$this->getFileBox()->getClass(),'file'=>$this->getFileBox()->getFile()));
-		if (!$path)
-			$path = basename(str_replace('\\','/',$this->getFileBox()->getClass()));
+  	if (!$path)
+  		$path = basename(str_replace('\\','/',$this->getFileBox()->getClass()));
 		$fileBox = Core::getFileBox(Core::formatPath($path,'views',$this->getFileBox()->getContext()));
 		$view = new \devmo\View();
 		$view->setTemplate($fileBox->file);
 		if ($tokens)
 			$view->setTokens($tokens);
-		return $view;
+  	return $view;
   }
 
 	protected function getGet ($name, $default=false, $makeSafe=true) {
@@ -615,13 +643,13 @@ abstract class Dto extends \devmo\Box {
 			if ($record!=null && !(is_object($record) || is_array($record)))
 				throw new \devmo\exceptions\Exception('record is not iterable');
 			foreach ($this as $k=>$v)
-				$this->{$k} = $this->getValue($k,$record);
+				$this->{$k} = self::getValue($k,$record);
 		}
-		$this->init();
 	}
-	protected function init () {}
 	public function setId ($id) {
-		return ($this->id = $id);
+		if (!preg_match('/^\d+$/',$id))
+			throw new InvalidException('id',$id);
+		$this->id = $id;
 	}
 	public function getId () {
 		return $this->id;
@@ -680,12 +708,23 @@ class Exception extends \LogicException {
 				.($this->info ? PHP_EOL."Info: {$this->info}" : null)
 				.PHP_EOL."Where: ";
 		$devmoPath = Config::getPathForNamespace('devmo');
-		foreach ($this->getTrace() as $x) {
-			if (!preg_match("=^{$devmoPath}=",$x['file'])) {
+		$trace = $this->getTrace();
+		foreach ($trace as $i=>$x) {
+			if (!preg_match("=^{$devmoPath}=",Devmo::getValue('file',$x))) {
+				$args = array();
+				foreach ($x['args'] as $xa) {
+					if (is_array($xa)) {
+						$args[] = 'Array';
+					} else if (is_object($xa)) {
+						$args[] = 'Object';
+					} else {
+						$args[] = $xa;
+					}
+				}
 				$err .= (isset($x['file'])?"{$x['file']}:{$x['line']}":null)
 						 .(isset($x['class'])?" {$x['class']}{$x['type']}":null)
-						 .(isset($x['function'])?$x['function'].'('.implode(', ',$x['args']).') ':null);
-				break;
+						 .(isset($x['function'])?$x['function'].'('.implode(', ',$args).') ':null)
+						 .PHP_EOL;
 			}
 		}
     return $err;

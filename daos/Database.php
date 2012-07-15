@@ -187,7 +187,7 @@ class DatabaseBox {
 
 
 class ResultSetDatabaseDao implements \Iterator, \Countable {
-	private $dto = '\stdClass';
+	private $dto = null;
 	private $result = null;
 	private $position = 0;
 	private $count = 0;
@@ -220,7 +220,7 @@ class ResultSetDatabaseDao implements \Iterator, \Countable {
 	}
 
 	function current () {
-		return $this->result->fetch_object($this->dto);
+		return $this->getObject();
 	}
 
 	function key () {
@@ -269,14 +269,15 @@ class ResultSetDatabaseDao implements \Iterator, \Countable {
 	}
 
 	function getObject () {
-		return $this->result->fetch_object($this->dto);
+		return ($x = $this->result->fetch_object()) ? $this->dto ? new $this->dto($x) : $x : false;
 	}
 
 	function getObjects () {
 		$objs = array();
 		$this->rewind();
-		while ($x = $this->result->fetch_object($this->dto))
+		while ($x = $this->getObject()) {
 			$objs[] = $x;
+		}
 		return $objs;
 	}
 
