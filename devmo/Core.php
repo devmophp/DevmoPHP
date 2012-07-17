@@ -340,7 +340,7 @@ class Object {
 		}
 		print Config::isCli() ? null : PHP_EOL.'</pre>';
 	}
-	public static function getValue ($needle, $haystack, $default=false) {
+	public static function getValue ($needle, $haystack, $default=null) {
 		if (is_array($haystack))
 			return isset($haystack[$needle])
 				? $haystack[$needle]
