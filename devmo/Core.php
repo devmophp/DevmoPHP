@@ -638,12 +638,15 @@ abstract class Dao extends Object {}
 
 abstract class Dto extends \devmo\Box {
 	protected $id;
-	public function __construct ($record=null) {
+	public function __construct ($record=null, $validate=false) {
 		if ($record!==null) {
 			if ($record!=null && !(is_object($record) || is_array($record)))
 				throw new \devmo\exceptions\Exception('record is not iterable');
 			foreach ($this as $k=>$v)
-				$this->{$k} = self::getValue($k,$record);
+				if ($validate)
+					$this->__set($k, $v);
+				else
+					$this->{$k} = self::getValue($k,$record);
 		}
 	}
 	public function setId ($id) {
