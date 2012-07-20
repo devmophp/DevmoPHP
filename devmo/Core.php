@@ -483,13 +483,13 @@ abstract class Controller extends Loader {
   }
 
 	protected function getGet ($name, $default=false, $makeSafe=true) {
-		return (($value = $this->getValue($name,$_GET,$default)) && $makeSafe)
+		return (($value = self::getValue($name,$_GET,$default)) && $makeSafe)
 			? Core::makeSafe($value)
 			: $value;
 	}
 
 	protected function getPost ($name, $default=false, $makeSafe=true) {
-		return (($value = $this->getValue($name,$_POST,$default)) && $makeSafe)
+		return (($value = self::getValue($name,$_POST,$default)) && $makeSafe)
 			? Core::makeSafe($value)
 			: $value;
 	}
@@ -497,11 +497,11 @@ abstract class Controller extends Loader {
 	protected function getSession ($name, $default=false) {
 		if (!isset($_SESSION))
 			throw new \devmo\exceptions\Exception('session does not exist');
-		return $this->getValue($name,$_SESSION,$default);
+		return self::getValue($name,$_SESSION,$default);
 	}
 
 	protected function getRequest ($name, $default=false, $makeSafe=true) {
-		return (($value = $this->getValue($name,$_REQUEST,$default)) && $makeSafe)
+		return (($value = self::getValue($name,$_REQUEST,$default)) && $makeSafe)
 			? Core::makeSafe($value)
 			: $value;
 	}
