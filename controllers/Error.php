@@ -17,16 +17,10 @@ class Error extends \devmo\controllers\Controller {
 		foreach ($args as $k=>$v)
 			$message .= " {$k}:{$v}";
     // build wrapper
-		$view = null;
-		if (Config::isCli()) {
-			$view = $this->getView('devmo.echo');
-			$view->string = $this->exception;
-		} else {
-			$error = $this->getView("devmo.views.{$this->exception->name}Error",$args);
-			$view = $this->getView('devmo.views.Error',array('body'=>$error,'trace'=>$this->exception->__toViewString()));
-			$view = $this->runController('devmo.SiteWrapper',array('title'=>'Problems!','body'=>$view));
-		}
-		return $view;
+    $error = $this->getView("devmo.views.{$this->exception->name}Error",$args);
+    $view = $this->getView('devmo.views.Error',array('body'=>$error,'trace'=>$this->exception->__toViewString()));
+    $wrap = $this->runController('devmo.SiteWrapper',array('title'=>'Problems!','body'=>$view));
+    return $wrap;
   }
 
 	public function setException ($exception) {
