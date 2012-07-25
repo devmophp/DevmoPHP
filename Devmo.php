@@ -19,5 +19,6 @@ class Devmo extends \devmo\Object {
 	}
 }
 // set default configs
+Config::init();
 Config::addNamespacePathMapping('devmo',DEVMO_PATH,false);
 Config::setRequest(Devmo::getValue('PATH_INFO',$_SERVER));
