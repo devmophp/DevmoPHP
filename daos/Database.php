@@ -154,6 +154,20 @@ class Database extends \devmo\Dao {
 
 
 	/**
+	 * formatBoolean
+	 *
+	 * @access protected
+	 * @param mixed $number
+	 * @return void
+	 */
+	protected function formatBoolean ($boolean=null, $nullable=true) {
+		if (($boolean===null && !$nullable) || ($boolean!==null && !is_bool($boolean)))
+			throw new InvalidArgumentException('Invalid Boolean');
+		return ($boolean===null ? 'NULL' : ($boolean ? '1' : '0'));
+  }
+
+
+	/**
 	 * formatText
 	 *
 	 * @access protected
