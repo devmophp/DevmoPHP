@@ -5,8 +5,48 @@ use \Devmo;
 use \devmo\exceptions\CoreException;
 use \devmo\exceptions\InvalidException;
 
+class Object {
+	public function __toString () {
+		return 'Object:\\'.get_class($this);
+	}
+	public static function debug ($mixed, $title=null, $option=null) {
+		print Config::isCli() ? null : '<pre>'.PHP_EOL;
+		print PHP_EOL.$title.PHP_EOL;
+		switch ($mixed) {
+			default:
+				print_r($mixed);
+				break;
+			case 'fatal':
+				print_r($mixed);
+				exit;
+				break;
+			case 'trace':
+				debug_print_backtrace();
+				print_r($mixed);
+				break;
+			case 'obj':
+				print_r($mixed);
+				break;
+			case 'xml':
+				echo $mixed->asXML();
+				break;
+		}
+		print Config::isCli() ? null : PHP_EOL.'</pre>';
+	}
+	public static function getValue ($needle, $haystack, $default=null) {
+		if (is_array($haystack))
+			return isset($haystack[$needle])
+				? $haystack[$needle]
+				: $default;
+		if (is_object($haystack))
+			return isset($haystack->{$needle})
+				? $haystack->{$needle}
+				: $default;
+	}
+}
 
-class Core {
+class Core extends Object {
+	private static $fileBoxes = array();
 	public static function execute ($path=false, $args=null) {
 		// find controller
 		if (!($controller = $path) && Config::getRequestedController()) {
@@ -45,48 +85,17 @@ class Core {
 			return $view;
 	}
 
-	public static function getFileBox ($path) {
-		// get directory map
-		$typeDirectoryMap = Config::getTypeDirectoryMap();
-		$typeNamespacePathMap = Config::getTypeNamespacePathMap();
-		// find context and type
-		preg_match('/^(.*?)([^\.]+)\.([^\.]+)$/',$path,$matches);
-		$context = Devmo::getValue(1,$matches);
-		if (!isset($matches[2]) || !isset($typeDirectoryMap[$matches[2]]))
-			throw new CoreException('FileTypeNotFound',array('type'=>Devmo::getValue(2,$matches),'path'=>$path,'types'=>implode(',',array_keys($typeDirectoryMap))));
-		$type = $matches[2];
-		// put it together
-		$xFile = $file = $class = null;
-		foreach ($typeNamespacePathMap[$type] as $xNamespace=>$xPath) {
-			if (preg_match("/^{$xNamespace}/",$context)>0) {
-				$xName = preg_replace('/[ _-]+/','',ucwords($matches[3]));
-				$xDir = preg_replace("/^{$xNamespace}/",$xPath,str_replace('.','/',$context)).($xNamespace=='devmo'?$type:$typeDirectoryMap[$type]);
-				$xFile = $xDir.'/'.$xName.'.php';
-				if (is_file($xFile)) {
-					$file = $xFile;
-					$class = str_replace('.','\\','\\'.$context.$type.'\\'.$xName);
-					break;
-				}
-			}
-		}
-		if ($xFile==null)
-			throw new CoreException('NamespaceNotDefined',array('path'=>$path,'context'=>$context,'namespaces'=>implode(',',array_keys($typeNamespacePathMap[$type]))));
-		if ($file==null)
-			throw new CoreException('FileNotFound',array('request'=>$xFile));
-		// return file box
-		return new FileBox(compact('type','class','file','context'));
-	}
-
 	public static function getObject ($path, $option='auto', $args=null) {
-		$fileBox = self::getFileBox($path);
-		require_once($fileBox->getFile());
-		if ($option=='load')
-			return true;
-		// check for class
+		// get file box
+		if (!($fileBox = self::getValue($path,self::$fileBoxes)))
+			$fileBox = self::$fileBoxes[$path] = new FileBox($path);
+		// check for class again
 		$class = $fileBox->getClass();
-		// load file
 		if (!class_exists($class))
 			throw new CoreException('ClassNotFound',array('class'=>$class,'file'=>$fileBox->getFile()));
+		// return if we aren't doing anything else
+		if ($option=='load')
+			return true;
 		// check for parent class
 		$parentClass = null;
 		switch ($fileBox->getType()) {
@@ -114,8 +123,8 @@ class Core {
 				break;
 		}
 		if ($parentClass && !($obj instanceof $parentClass))
-			throw new CoreException('ClassNotController',array('class'=>$fileBox->getClass(),'file'=>$fileBox->getFile()));
-		if (($obj instanceof Loader))
+			throw new CoreException('ClassNotController',array('class'=>$class,'file'=>$fileBox->getFile()));
+		if ($obj instanceof Loader)
 			$obj->setFileBox($fileBox);
 		return $obj;
 	}
@@ -236,8 +245,10 @@ class Config {
 
 	# for application use
 	public static function addNamespacePathMapping ($namespace, $path, $default=false) {
-		foreach (self::$typeNamespacePathMap as $k=>$v)
+		foreach (self::$typeNamespacePathMap as $k=>$v) {
 			self::$typeNamespacePathMap[$k][$namespace] = $path;
+			uasort(self::$typeNamespacePathMap[$k],function ($a,$b) { return strlen($a)-strlen($b); });
+		}
 		if ($default || (self::$defaultNamespace==null && $namespace!='devmo'))
 			self::$defaultNamespace = $namespace;
 	}
@@ -312,46 +323,6 @@ class Config {
 	}
 }
 
-class Object {
-	public function __toString () {
-		return 'Object:\\'.get_class($this);
-	}
-	public static function debug ($mixed, $title=null, $option=null) {
-		print Config::isCli() ? null : '<pre>'.PHP_EOL;
-		print PHP_EOL.$title.PHP_EOL;
-		switch ($mixed) {
-			default:
-				print_r($mixed);
-				break;
-			case 'fatal':
-				print_r($mixed);
-				exit;
-				break;
-			case 'trace':
-				debug_print_backtrace();
-				print_r($mixed);
-				break;
-			case 'obj':
-				print_r($mixed);
-				break;
-			case 'xml':
-				echo $mixed->asXML();
-				break;
-		}
-		print Config::isCli() ? null : PHP_EOL.'</pre>';
-	}
-	public static function getValue ($needle, $haystack, $default=null) {
-		if (is_array($haystack))
-			return isset($haystack[$needle])
-				? $haystack[$needle]
-				: $default;
-		if (is_object($haystack))
-			return isset($haystack->{$needle})
-				? $haystack->{$needle}
-				: $default;
-	}
-}
-
 class Box extends Object {
 	public function __set ($name, $value) {
 		return $this->{'set'.ucfirst($name)}($name,$value);
@@ -368,12 +339,39 @@ class FileBox extends Box {
 	private $file;
 	private $context;
 	private $path;
-	public function __construct(array $values) {
-		$this->setType($values['type']);
-		$this->setClass($values['class']);
-		$this->setFile($values['file']);
-		$this->setContext($values['context']);
-		$this->setPath(trim(str_replace('\\','.',$values['class']),'.'));
+	public function __construct($path) {
+		// get directory map
+		$typeDirectoryMap = Config::getTypeDirectoryMap();
+		$typeNamespacePathMap = Config::getTypeNamespacePathMap();
+		// find context and type
+		preg_match('/^(.*?)([^\.]+)\.([^\.]+)$/',$path,$matches);
+		$context = Devmo::getValue(1,$matches);
+		if (!isset($matches[2]) || !isset($typeDirectoryMap[$matches[2]]))
+			throw new CoreException('FileTypeNotFound',array('type'=>Devmo::getValue(2,$matches),'path'=>$path,'types'=>implode(',',array_keys($typeDirectoryMap))));
+		$type = $matches[2];
+		// put it together
+		$this->setPath($path);
+		$this->setClass(str_replace('.','\\','.'.$path));
+		$this->setType($type);
+		$this->setContext($context);
+		if (!class_exists($this->getClass())) {
+			$xFile = null;
+			foreach ($typeNamespacePathMap[$type] as $xNamespace=>$xPath) {
+				if (preg_match("/^{$xNamespace}/",$context)>0) {
+					$xName = preg_replace('/[ _-]+/','',ucwords($matches[3]));
+					$xDir = preg_replace("/^{$xNamespace}/",$xPath,str_replace('.','/',$context)).($xNamespace=='devmo'?$type:$typeDirectoryMap[$type]);
+					$xFile = $xDir.'/'.$xName.'.php';
+					if (is_file($xFile)) {
+						require_once($xFile);
+						$this->setFile($xFile);
+					}
+				}
+			}
+			if ($xFile==null)
+				new CoreException('NamespaceNotDefined',array('path'=>$path,'context'=>$context,'namespaces'=>implode(',',array_keys($typeNamespacePathMap[$type]))));
+			if (!$this->getFile())
+				new CoreException('FileNotFound',array('request'=>$xFile));
+		}
 	}
 	public function setType ($type) {
 		$this->type = $type;
