@@ -370,10 +370,9 @@ class Config extends Object{
 		return self::$defaultNamespace;
 	}
 }
-
 class Box extends Object {
 	public function __set ($name, $value) {
-		return $this->{'set'.ucfirst($name)}($name,$value);
+		return $this->{'set'.ucfirst($name)}($value);
 	}
 	public function __get ($name) {
 		return $this->{'get'.ucfirst($name)}();
@@ -635,9 +634,16 @@ abstract class Dto extends \devmo\Box {
 		if ($record!==null) {
 			if ($record!=null && !(is_object($record) || is_array($record)))
 				throw new \devmo\exceptions\Exception('record is not iterable');
-			foreach ($this as $k=>$v)
+			$fields = $this;
+			if ($validate) {
+				$fields = array_intersect_key(
+					is_object($record) ? get_object_vars($record) : $record,
+					get_object_vars($this)
+				);
+			}
+			foreach ($fields as $k=>$v)
 				if ($validate)
-					$this->__set($k, $v);
+					$this->__set($k, self::getValue($k,$record));
 				else
 					$this->{$k} = self::getValue($k,$record);
 		}
@@ -685,7 +691,7 @@ class Exception extends \LogicException {
 				} else if (is_object($xa)) {
 					$args .= ($args?',':null).get_class($xa);
 				} else {
-					$args .= ($args?',':null).$xa;
+					$args .= ($args?',':null).var_export($xa, true);
 				}
 			}
       $err .= PHP_EOL
