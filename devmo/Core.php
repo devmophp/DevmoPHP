@@ -5,8 +5,51 @@ use \Devmo;
 use \devmo\exceptions\CoreException;
 use \devmo\exceptions\InvalidException;
 
+class Object {
+	public function __toString () {
+		return 'Object:\\'.get_class($this);
+	}
+	public static function debug ($mixed, $title=null, $option=null) {
+		print Config::isCli() ? null : '<pre>'.PHP_EOL;
+		print PHP_EOL.$title.PHP_EOL;
+		switch ($option) {
+			default:
+				print_r($mixed);
+				break;
+			case 'fatal':
+				print_r($mixed);
+				exit;
+				break;
+			case 'trace':
+				debug_print_backtrace();
+				print_r($mixed);
+				break;
+			case 'obj':
+				print_r($mixed);
+				break;
+			case 'xml':
+				echo $mixed->asXML();
+				break;
+		}
+		print Config::isCli() ? null : PHP_EOL.'</pre>';
+	}
+	public static function getValue ($needle, $haystack, $default=null) {
+		if (is_array($haystack))
+			return isset($haystack[$needle])
+				? $haystack[$needle]
+				: $default;
+		if (is_object($haystack))
+			return isset($haystack->{$needle})
+				? $haystack->{$needle}
+				: $default;
+	}
+	public static function classExists ($class) {
+		return in_array(substr($class,1),get_declared_classes());
+	}
+}
 
-class Core {
+class Core extends Object {
+	private static $fileBoxes = array();
 	public static function execute ($path=false, $args=null) {
 		// find controller
 		if (!($controller = $path) && Config::getRequestedController()) {
@@ -30,9 +73,9 @@ class Core {
 		return $view;
 	}
 
-	private static function executeController ($path, $args=null, $message=null) {
+	private static function executeController ($path, array $args=null, $message=null) {
 		//  get controller object
-		$controller = self::getObject($path,'new');
+		$controller = self::load($path,'new');
 		if ($message)
 			$controller->setMessage($message);
 		//	run controller
@@ -41,52 +84,59 @@ class Core {
 		if ($controller->getForward())
 			return self::executeController($controller->getForward(),$args,$message);
 		// return only views
-		if ($view instanceof View)
-			return $view;
+		return $view instanceof View ? $view : null;
 	}
 
-	public static function getFileBox ($path) {
-		// get directory map
-		$typeDirectoryMap = Config::getTypeDirectoryMap();
-		$typeNamespacePathMap = Config::getTypeNamespacePathMap();
-		// find context and type
-		preg_match('/^(.*?)([^\.]+)\.([^\.]+)$/',$path,$matches);
-		$context = Devmo::getValue(1,$matches);
-		if (!isset($matches[2]) || !isset($typeDirectoryMap[$matches[2]]))
-			throw new CoreException('FileTypeNotFound',array('type'=>Devmo::getValue(2,$matches),'path'=>$path,'types'=>implode(',',array_keys($typeDirectoryMap))));
-		$type = $matches[2];
-		// put it together
-		$xFile = $file = $class = null;
-		foreach ($typeNamespacePathMap[$type] as $xNamespace=>$xPath) {
-			if (preg_match("/^{$xNamespace}/",$context)>0) {
-				$xName = preg_replace('/[ _-]+/','',ucwords($matches[3]));
-				$xDir = preg_replace("/^{$xNamespace}/",$xPath,str_replace('.','/',$context)).($xNamespace=='devmo'?$type:$typeDirectoryMap[$type]);
-				$xFile = $xDir.'/'.$xName.'.php';
-				if (is_file($xFile)) {
-					$file = $xFile;
-					$class = str_replace('.','\\','\\'.$context.$type.'\\'.$xName);
-					break;
+	public static function load ($path, $option='filebox', $args=null) {
+		if (!$path)
+			throw new InvalidException($path,'path');
+		if (!($fileBox = self::getValue($path,self::$fileBoxes))) {
+			// find context and type
+			preg_match('/^(.*?)([^\.]+)\.([^\.]+)$/',$path,$matches);
+			$context = self::getValue(1,$matches);
+			if (!isset($matches[2]) || !($folder = Config::getFolderForType($matches[2])))
+				throw new CoreException('FileTypeNotFound',array('type'=>self::getValue(2,$matches),'path'=>$path,'types'=>implode(',',Config::getTypes())));
+			$type = $matches[2];
+			// put it together
+			$fileBox = new FileBox();
+			$fileBox->setPath($path);
+			$fileBox->setType($type);
+			$fileBox->setContext($context);
+			if ($option!='filebox')
+				$fileBox->setClass(str_replace('.','\\','.'.$matches[1].$matches[2].'.'.ucfirst($matches[3])));
+			$xFile = null;
+			foreach (Config::getNamespacePathForType($type) as $xNamespace=>$xPath) {
+				if (preg_match("/^{$xNamespace}/",$context)>0) {
+					$xName = preg_replace('/[ _-]+/','',ucwords($matches[3]));
+					$xDir = preg_replace("/^{$xNamespace}/",$xPath,str_replace('.','/',$context)).($xNamespace=='devmo'?$type:$folder);
+					$xFile = $xDir.'/'.$xName.'.php';
+					if (is_file($xFile)) {
+						$fileBox->setFile($xFile);
+						break;
+					}
 				}
 			}
+			if ($xFile==null)
+				throw new CoreException('NamespaceNotDefined',array('path'=>$path,'namespace'=>$context,'namespaces'=>implode(',',Config::getNamespacesForType($type))));
+			self::$fileBoxes[$path] = $fileBox;
 		}
-		if ($xFile==null)
-			throw new CoreException('NamespaceNotDefined',array('path'=>$path,'context'=>$context,'namespaces'=>implode(',',array_keys($typeNamespacePathMap[$type]))));
-		if ($file==null)
-			throw new CoreException('FileNotFound',array('request'=>$xFile));
-		// return file box
-		return new FileBox(compact('type','class','file','context'));
-	}
-
-	public static function getObject ($path, $option='auto', $args=null) {
-		$fileBox = self::getFileBox($path);
-		require_once($fileBox->getFile());
-		if ($option=='load')
-			return true;
+		// check for file
+		if ($option=='filebox') {
+			if (!$fileBox->getFile())
+				throw new CoreException('FileNotFound',array('request'=>Config::getRequest(),'path'=>$path));
+			return $fileBox;
+		}
 		// check for class
-		$class = $fileBox->getClass();
-		// load file
-		if (!class_exists($class))
-			throw new CoreException('ClassNotFound',array('class'=>$class,'file'=>$fileBox->getFile()));
+		if (!self::classExists($fileBox->getClass())) {
+			if (!$fileBox->getFile())
+				throw new CoreException('FileNotFound',array('request'=>$path));
+			require_once($fileBox->getFile());
+			if (!self::classExists($fileBox->getClass()))
+				throw new CoreException('ClassNotFound',array('class'=>$fileBox->getClass(),'file'=>$fileBox->getFile()));
+		}
+		// return if we aren't doing anything else
+		if ($option=='static')
+			return true;
 		// check for parent class
 		$parentClass = null;
 		switch ($fileBox->getType()) {
@@ -95,10 +145,11 @@ class Core {
 			case 'daos': $parentClass = '\devmo\Dao'; break;
 			case 'dtos': $parentClass = '\devmo\Dto'; break;
 		}
-		if ($parentClass && !class_exists($parentClass))
+		if ($parentClass && !self::classExists($parentClass))
 			throw new CoreException('ClassNotFound',array('class'=>$parentClass,'file'=>$fileBox->getFile()));
 		//  handle options
 		$obj = null;
+		$class = $fileBox->getClass();
 		switch ($option) {
 			default:
 			case 'auto':
@@ -115,7 +166,7 @@ class Core {
 		}
 		if ($parentClass && !($obj instanceof $parentClass))
 			throw new CoreException('ClassNotController',array('class'=>$fileBox->getClass(),'file'=>$fileBox->getFile()));
-		if (($obj instanceof Loader))
+		if ($obj instanceof Loader)
 			$obj->setFileBox($fileBox);
 		return $obj;
 	}
@@ -156,7 +207,7 @@ class Core {
 		if (Config::isCli()) {
 			return Config::isDebug() ? (string)$e : $e->getMessage();
 		} else if (Config::isDebug()) {
-			$controller = self::getObject('devmo.controllers.Error','new');
+			$controller = self::load('devmo.controllers.Error','new');
 			$controller->setException($e);
 			return $controller->run($e->tokens);
 		} else {
@@ -169,7 +220,7 @@ class Core {
 			$class = str_replace(array('/','\\'),'.',$class);
 		if (substr($class,0,1)=='.')
 			$class = substr($class,1);
-		self::getObject($class,'load');
+		self::load($class,'static');
 	}
 
 	public static function formatPath ($path, $type, $context=null) {
@@ -193,7 +244,7 @@ class Core {
 	}
 
 	public static function formatControllerToRequest ($controller) {
-		return preg_replace('='.Config::getRequest().'$=','',Devmo::getValue('PHP_SELF',$_SERVER))
+		return preg_replace('='.Config::getRequest().'$=','',self::getValue('PHP_SELF',$_SERVER))
 				.preg_replace(
 						array('/^'.Config::getDefaultNamespace().'/','/controllers?\./','/\.+/'),
 						array('','','/'),
@@ -202,8 +253,8 @@ class Core {
 
 }
 
-class Config {
-	private static $typeDirectoryMap = array(
+class Config extends Object{
+	private static $typeFolderMap = array(
 			'exceptions'=>'_exceptions',
 			'controllers'=>'_controllers',
 			'logic'=>'_logic',
@@ -231,13 +282,15 @@ class Config {
 	private static $debug = false;
 	private static $cli = false;
 	public static function init () {
-		self::$cli = (bool) Devmo::getValue('SHELL',$_SERVER,false);
+		self::$cli = (bool) self::getValue('SHELL',$_SERVER,false);
 	}
 
 	# for application use
 	public static function addNamespacePathMapping ($namespace, $path, $default=false) {
-		foreach (self::$typeNamespacePathMap as $k=>$v)
+		foreach (self::$typeNamespacePathMap as $k=>$v) {
 			self::$typeNamespacePathMap[$k][$namespace] = $path;
+			uasort(self::$typeNamespacePathMap[$k],function ($a,$b) { return strlen($b)-strlen($a); });
+		}
 		if ($default || (self::$defaultNamespace==null && $namespace!='devmo'))
 			self::$defaultNamespace = $namespace;
 	}
@@ -290,11 +343,17 @@ class Config {
 	public static function getRequestControllerMap () {
 		return self::$requestControllerMap;
 	}
-	public static function getTypeDirectoryMap () {
-		return self::$typeDirectoryMap;
+	public static function getTypes () {
+		return array_keys(self::$typeFolderMap);
 	}
-	public static function getTypeNamespacePathMap () {
-		return self::$typeNamespacePathMap;
+	public static function getFolderForType ($type) {
+		return self::getValue($type,self::$typeFolderMap);
+	}
+	public static function getNamespacesForType ($type) {
+		return array_keys(self::getNamespacePathForType($type));
+	}
+	public static function getNamespacePathForType ($type) {
+		return self::getValue($type,self::$typeNamespacePathMap);
 	}
 	public static function getErrorLog () {
 		return self::$errorLogFile;
@@ -312,46 +371,6 @@ class Config {
 	}
 }
 
-class Object {
-	public function __toString () {
-		return 'Object:\\'.get_class($this);
-	}
-	public static function debug ($mixed, $title=null, $option=null) {
-		print Config::isCli() ? null : '<pre>'.PHP_EOL;
-		print PHP_EOL.$title.PHP_EOL;
-		switch ($mixed) {
-			default:
-				print_r($mixed);
-				break;
-			case 'fatal':
-				print_r($mixed);
-				exit;
-				break;
-			case 'trace':
-				debug_print_backtrace();
-				print_r($mixed);
-				break;
-			case 'obj':
-				print_r($mixed);
-				break;
-			case 'xml':
-				echo $mixed->asXML();
-				break;
-		}
-		print Config::isCli() ? null : PHP_EOL.'</pre>';
-	}
-	public static function getValue ($needle, $haystack, $default=null) {
-		if (is_array($haystack))
-			return isset($haystack[$needle])
-				? $haystack[$needle]
-				: $default;
-		if (is_object($haystack))
-			return isset($haystack->{$needle})
-				? $haystack->{$needle}
-				: $default;
-	}
-}
-
 class Box extends Object {
 	public function __set ($name, $value) {
 		return $this->{'set'.ucfirst($name)}($name,$value);
@@ -361,20 +380,12 @@ class Box extends Object {
 	}
 }
 
-
 class FileBox extends Box {
 	private $type;
 	private $class;
 	private $file;
 	private $context;
 	private $path;
-	public function __construct(array $values) {
-		$this->setType($values['type']);
-		$this->setClass($values['class']);
-		$this->setFile($values['file']);
-		$this->setContext($values['context']);
-		$this->setPath(trim(str_replace('\\','.',$values['class']),'.'));
-	}
 	public function setType ($type) {
 		$this->type = $type;
 	}
@@ -405,34 +416,31 @@ class FileBox extends Box {
 	public function getPath () {
 		return $this->path;
 	}
+	public function copy (FileBox $fb) {
+		$this->class = $fb->getClass();
+		$this->context = $fb->getContext();
+		$this->file = $fb->getFile();
+		$this->path = $fb->getPath();
+		$this->type = $fb->getType();
+	}
 }
 
-
 class Loader extends Object {
-	private $fileBox = null;
-
-  public function setFileBox (\devmo\FileBox $fileBox) {
-  	$this->fileBox = $fileBox;
-  }
-
-	protected function getFileBox () {
-		return $this->fileBox;
-	}
-
-  public function getContext () {
-  	return $this->fileBox->getContext();
-  }
-
-	protected function getPath () {
-		return $this->fileBox->getPath();
-	}
-
+	private $fb = null;
   protected function get ($path, $args=null, $option='auto') {
 		if ($path[0]=='.')
-			$path = $this->fileBox->getContext().substr($path,1);
-  	return Core::getObject($path,$option,$args);
+			$path = $this->getContext().substr($path,1);
+  	return Core::load($path,$option,$args);
   }
-
+	public function setFileBox (FileBox $fileBox) {
+		$this->fb = $fileBox;
+	}
+	public function getClass () {
+		return $this->fb->getClass();
+	}
+	public function getContext () {
+		return $this->fb->getContext();
+	}
 }
 
 abstract class Controller extends Loader {
@@ -470,16 +478,10 @@ abstract class Controller extends Loader {
   }
 
   protected function getView ($path=null, $tokens=null) {
-  	if (!($this instanceof \devmo\Controller))
-			throw new CoreException('ClassNotController',array('class'=>$this->getFileBox()->getClass(),'file'=>$this->getFileBox()->getFile()));
   	if (!$path)
-  		$path = basename(str_replace('\\','/',$this->getFileBox()->getClass()));
-		$fileBox = Core::getFileBox(Core::formatPath($path,'views',$this->getFileBox()->getContext()));
-		$view = new \devmo\View();
-		$view->setTemplate($fileBox->file);
-		if ($tokens)
-			$view->setTokens($tokens);
-  	return $view;
+  		$path = basename(str_replace('\\','/',$this->getClass()));
+		$path = Core::formatPath($path,'views',$this->getContext());
+		return new \devmo\View($path,$tokens);
   }
 
 	protected function getGet ($name, $default=false, $makeSafe=true) {
@@ -551,14 +553,21 @@ abstract class Controller extends Loader {
 
 
 class View extends Object {
-	private $parent;	//	ref to parent view object
-	private $template;	//	str	template file
-	private $tokens;
+	private $_parent = null;
+	private $_path = null;
+	private $_tokens = null;
 
-	public function __construct () {
-		$this->parent = null;
-		$this->template = null;
-		$this->tokens = new \stdClass;
+	public function __construct ($path, $tokens=null) {
+		$this->_path = $path;
+		if (!$tokens) {
+			$this->_tokens = new \stdClass;
+		} else if (is_array($tokens)) {
+			$this->_tokens = (object) $tokens;
+		} else if (is_string($tokens)) {
+			$this->_tokens = (object) array('echo'=>$tokens);
+		} else if (is_object($tokens)) {
+			$this->_tokens = $tokens;
+		}
 	}
 
   public function __set ($name, $value) {
@@ -574,19 +583,15 @@ class View extends Object {
 	}
 
 	public function __toString () {
-		if (!$this->getTemplate())
-			throw new Error("Missing or Invalid Output File:".$this->getTemplate());
-		//	execute view code and capture output
 		ob_start();
 		try {
-			include($this->getTemplate());
+			require(Core::load($this->_path,'filebox')->getFile());
 		} catch (\Exception $e) {
 			Core::handleException($e);
 		}
-		$output = ob_get_contents();
+		$x = ob_get_contents();
 		ob_end_clean();
-		//	return executed code as string
-		return $output;
+		return $x;
 	}
 
 	public function getRoot () {
@@ -595,24 +600,12 @@ class View extends Object {
 			: $this;
 	}
 
-	public function setTemplate ($template) {
-		//	error checks
-		if (!$template)
-			throw new Error('Missing Template');
-		//	set template
-		$this->template = $template;
-	}
-
-	public function getTemplate () {
-		return $this->template;
-	}
-
 	public function set ($name, $value) {
-		$this->tokens->{$name} = $value;
+		$this->_tokens->{$name} = $value;
 	}
 
 	public function get ($name) {
-		return $this->getValue($name,$this->tokens);
+		return $this->getValue($name,$this->_tokens);
 	}
 
 	public function setTokens ($tokens) {
@@ -624,7 +617,7 @@ class View extends Object {
 	}
 
 	public function getTokens () {
-		return $this->tokens;
+		return $this->_tokens;
 	}
 
 }
@@ -713,16 +706,14 @@ class Exception extends \LogicException {
 		$devmoPath = Config::getPathForNamespace('devmo');
 		$trace = $this->getTrace();
 		foreach ($trace as $i=>$x) {
-			if (!preg_match("=^{$devmoPath}=",Devmo::getValue('file',$x))) {
-				$args = array();
-				foreach ($x['args'] as $xa) {
-					if (is_array($xa)) {
-						$args[] = 'Array';
-					} else if (is_object($xa)) {
-						$args[] = 'Object';
-					} else {
-						$args[] = $xa;
-					}
+			$args = array();
+			foreach ($x['args'] as $xa) {
+				if (is_array($xa)) {
+					$args[] = 'Array';
+				} else if (is_object($xa)) {
+					$args[] = 'Object';
+				} else {
+					$args[] = $xa;
 				}
 				$err .= (isset($x['file'])?"{$x['file']}:{$x['line']}":null)
 						 .(isset($x['class'])?" {$x['class']}{$x['type']}":null)

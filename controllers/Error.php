@@ -1,7 +1,7 @@
 <?php
 namespace devmo\controllers;
 /**
- * Default base controller for creating the wrapper around errors
+ * handler for all CoreExceptions
  *
  * @category Framework
  * @author Dan Wager
