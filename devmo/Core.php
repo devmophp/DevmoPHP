@@ -90,6 +90,9 @@ class Core extends Object {
 	public static function load ($path, $option='filebox', $args=null) {
 		if (!$path)
 			throw new InvalidException($path,'path');
+		// allow paths with ns seperator
+		if (strstr($path,'\\'))
+			$path = str_replace('\\','.',(substr($path,0,1)=='\\'?substr($path,1):$path));
 		if (!($fileBox = self::getValue($path,self::$fileBoxes))) {
 			// find context and type
 			preg_match('/^(.*?)([^\.]+)\.([^\.]+)$/',$path,$matches);
@@ -426,11 +429,12 @@ class FileBox extends Box {
 
 class Loader extends Object {
 	private $fb = null;
-  protected function get ($path, $args=null, $option='auto') {
-		if ($path[0]=='.')
-			$path = $this->getContext().substr($path,1);
-  	return Core::load($path,$option,$args);
-  }
+	protected function get ($path, $args=null, $option='auto') {
+		return Core::load(($path && substr($path,0,1)=='.' ? $this->getContext().substr($path,1) : $path),$option,$args);
+	}
+	protected function exists ($path) {
+		return Core::load(($path && substr($path,0,1)=='.' ? $this->getContext().substr($path,1) : $path),'check');
+	}
 	public function setFileBox (FileBox $fileBox) {
 		$this->fb = $fileBox;
 	}
@@ -552,20 +556,20 @@ abstract class Controller extends Loader {
 
 
 class View extends Object {
-	private $_parent = null;
-	private $_path = null;
-	private $_tokens = null;
+	private $parent = null;
+	private $path = null;
+	private $tokens = null;
 
 	public function __construct ($path, $tokens=null) {
-		$this->_path = $path;
+		$this->path = $path;
 		if (!$tokens) {
-			$this->_tokens = new \stdClass;
+			$this->tokens = new \stdClass;
 		} else if (is_array($tokens)) {
-			$this->_tokens = (object) $tokens;
+			$this->tokens = (object) $tokens;
 		} else if (is_string($tokens)) {
-			$this->_tokens = (object) array('echo'=>$tokens);
+			$this->tokens = (object) array('echo'=>$tokens);
 		} else if (is_object($tokens)) {
-			$this->_tokens = $tokens;
+			$this->tokens = $tokens;
 		}
 	}
 
@@ -574,17 +578,17 @@ class View extends Object {
 			throw new DevmoException('Token Value Is Circular Reference');
 		if (is_object($value) && $value instanceof View)
 			$value->parent = $this;
-		$this->set($name,$value);
+		$this->tokens->{$name} = $value;
   }
 
 	public function __get ($name) {
-		return $this->get($name);
+		return $this->getValue($name,$this->tokens);
 	}
 
 	public function __toString () {
 		ob_start();
 		try {
-			require(Core::load($this->_path,'filebox')->getFile());
+			require(Core::load($this->path,'filebox')->getFile());
 		} catch (\Exception $e) {
 			Core::handleException($e);
 		}
@@ -599,14 +603,6 @@ class View extends Object {
 			: $this;
 	}
 
-	public function set ($name, $value) {
-		$this->_tokens->{$name} = $value;
-	}
-
-	public function get ($name) {
-		return $this->getValue($name,$this->_tokens);
-	}
-
 	public function setTokens ($tokens) {
 		if (is_array($tokens) || is_object($tokens)) {
 			foreach ($tokens as $k=>$v) {
@@ -616,7 +612,7 @@ class View extends Object {
 	}
 
 	public function getTokens () {
-		return $this->_tokens;
+		return $this->tokens;
 	}
 
 }
