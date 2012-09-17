@@ -3,6 +3,8 @@ namespace devmo;
 
 use \Devmo;
 use \devmo\exceptions\CoreException;
+use \devmo\exceptions\FileNotFoundCoreException;
+use \devmo\exceptions\FileTypeNotFoundCoreException;
 use \devmo\exceptions\InvalidException;
 
 class Object {
@@ -98,7 +100,7 @@ class Core extends Object {
 			preg_match('/^(.*?)([^\.]+)\.([^\.]+)$/',$path,$matches);
 			$context = self::getValue(1,$matches);
 			if (!isset($matches[2]) || !($folder = Config::getFolderForType($matches[2])))
-				throw new CoreException('FileTypeNotFound',array('type'=>self::getValue(2,$matches),'path'=>$path,'types'=>implode(',',Config::getTypes())));
+				throw new FileTypeNotFoundCoreException(self::getValue(2,$matches),$path);
 			$type = $matches[2];
 			// put it together
 			$fileBox = new FileBox();
@@ -126,13 +128,13 @@ class Core extends Object {
 		// check for file
 		if ($option=='filebox') {
 			if (!$fileBox->getFile())
-				throw new CoreException('FileNotFound',array('request'=>Config::getRequest(),'path'=>$path));
+				throw new FileNotFoundCoreException($path,self::getRequest());
 			return $fileBox;
 		}
 		// check for class
 		if (!self::classExists($fileBox->getClass())) {
 			if (!$fileBox->getFile())
-				throw new CoreException('FileNotFound',array('request'=>$path));
+				throw new FileNotFoundCoreException($fileBox->getPath(),Config::getRequest());
 			require_once($fileBox->getFile());
 			if (!self::classExists($fileBox->getClass()))
 				throw new CoreException('ClassNotFound',array('class'=>$fileBox->getClass(),'file'=>$fileBox->getFile()));
@@ -218,13 +220,19 @@ class Core extends Object {
 		}
 	}
 
-	public static function loadClass ($class) {
-		if (strstr($class,'\\'))
-			$class = str_replace(array('/','\\'),'.',$class);
-		if (substr($class,0,1)=='.')
-			$class = substr($class,1);
-		self::load($class,'static');
-	}
+  public static function loadClass ($class) {
+    if (strstr($class,'\\'))
+      $class = str_replace(array('/','\\'),'.',$class);
+    if (substr($class,0,1)=='.')
+      $class = substr($class,1);
+    try {
+      return self::load($class,'static');
+    } catch (\Exception $e) {
+      return !(($e instanceof FileNotFoundCoreException || $e instanceof FileTypeNotFoundCoreException) && count(spl_autoload_functions())>1)
+				? self::handleException($e)
+				: false;
+    }
+  }
 
 	public static function formatPath ($path, $type, $context=null) {
 		if (!preg_match('/^(?P<path>.*?\.)?(?P<type>[^\.]+\.)?(?P<class>[^\.]+)$/',$path,$parts))
@@ -556,20 +564,20 @@ abstract class Controller extends Loader {
 
 
 class View extends Object {
-	private $parent = null;
-	private $path = null;
-	private $tokens = null;
+	private $myPath = null;
+	private $myParent = null;
+	private $myTokens = null;
 
 	public function __construct ($path, $tokens=null) {
-		$this->path = $path;
+		$this->myPath = $path;
 		if (!$tokens) {
-			$this->tokens = new \stdClass;
+			$this->myTokens = new \stdClass;
 		} else if (is_array($tokens)) {
-			$this->tokens = (object) $tokens;
+			$this->myTokens = (object) $tokens;
 		} else if (is_string($tokens)) {
-			$this->tokens = (object) array('echo'=>$tokens);
+			$this->myTokens = (object) array('echo'=>$tokens);
 		} else if (is_object($tokens)) {
-			$this->tokens = $tokens;
+			$this->myTokens = $tokens;
 		}
 	}
 
@@ -578,17 +586,17 @@ class View extends Object {
 			throw new DevmoException('Token Value Is Circular Reference');
 		if (is_object($value) && $value instanceof View)
 			$value->parent = $this;
-		$this->tokens->{$name} = $value;
+		$this->myTokens->{$name} = $value;
   }
 
 	public function __get ($name) {
-		return $this->getValue($name,$this->tokens);
+		return $this->getValue($name,$this->myTokens);
 	}
 
 	public function __toString () {
 		ob_start();
 		try {
-			require(Core::load($this->path,'filebox')->getFile());
+			require(Core::load($this->myPath,'filebox')->getFile());
 		} catch (\Exception $e) {
 			Core::handleException($e);
 		}
@@ -598,8 +606,8 @@ class View extends Object {
 	}
 
 	public function getRoot () {
-		return $this->parent
-			? $this->parent->getRoot()
+		return $this->myParent
+			? $this->myParent->getRoot()
 			: $this;
 	}
 
@@ -612,9 +620,8 @@ class View extends Object {
 	}
 
 	public function getTokens () {
-		return $this->tokens;
+		return $this->myTokens;
 	}
-
 }
 
 
@@ -735,4 +742,4 @@ if (get_magic_quotes_gpc())
 // set default exception handler
 set_error_handler(array('\devmo\Core','handleError'));
 set_exception_handler(array('\devmo\Core','handleException'));
-spl_autoload_register(array('\devmo\Core','loadClass'));
+spl_autoload_register(array('\devmo\Core','loadClass',true));
