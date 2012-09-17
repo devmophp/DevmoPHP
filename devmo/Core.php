@@ -48,6 +48,11 @@ class Object {
 	public static function classExists ($class) {
 		return in_array(substr($class,1),get_declared_classes());
 	}
+	public static function logError ($e) {
+		($logFile = Config::getErrorLog())
+			? error_log((string)$e,3,$logFile)
+			: error_log((string)$e,0);
+	}
 }
 
 class Core extends Object {
@@ -190,21 +195,21 @@ class Core extends Object {
 	public static function handleError ($number, $message, $file=null, $line=null, array $context=null) {
 		//256	E_USER_ERROR	512	E_USER_WARNING	1024	E_USER_NOTICE
 		// log it
-		Devmo::logError("Error [{$number}] {$message} file:{$file}:{$line}\n");
+		self::logError("Error [{$number}] {$message} file:{$file}:{$line}\n");
 		// use default error handler for everything else
 		return false;
 	}
 
 	public static function handleException (\Exception $e) {
 		// log it
-		Devmo::logError($e);
+		self::logError($e);
 		// display it
 		if ($e instanceof CoreException) {
 			echo self::handleCoreException($e);
 		} else {
 			Config::isDebug()
-				? Devmo::debug($e->__toString(),'log entry')
-				: Devmo::debug($e->getMessage(),'See the error log for more details');
+				? self::debug($e->__toString(),'log entry')
+				: self::debug($e->getMessage(),'See the error log for more details');
 		}
 	}
 
@@ -742,4 +747,4 @@ if (get_magic_quotes_gpc())
 // set default exception handler
 set_error_handler(array('\devmo\Core','handleError'));
 set_exception_handler(array('\devmo\Core','handleException'));
-spl_autoload_register(array('\devmo\Core','loadClass',true));
+spl_autoload_register(array('\devmo\Core','loadClass'),true);
