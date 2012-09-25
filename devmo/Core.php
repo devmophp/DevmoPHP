@@ -44,6 +44,9 @@ class Object {
 			return isset($haystack->{$needle})
 				? $haystack->{$needle}
 				: $default;
+		if (is_null($haystack))
+			return $default;
+		throw \InvalidArgumentException('Haystack must be an array, object, or null.');
 	}
 	public static function classExists ($class) {
 		return in_array(substr($class,1),get_declared_classes());
@@ -386,6 +389,7 @@ class Config extends Object{
 		return self::$defaultNamespace;
 	}
 }
+
 class Box extends Object {
 	public function __set ($name, $value) {
 		return $this->{'set'.ucfirst($name)}($value);
