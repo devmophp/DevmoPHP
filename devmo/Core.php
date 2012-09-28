@@ -461,6 +461,9 @@ class Loader extends Object {
 	public function getContext () {
 		return $this->fb->getContext();
 	}
+	public function getPath () {
+		return $this->fb->getPath();
+	}
 }
 
 abstract class Controller extends Loader {
