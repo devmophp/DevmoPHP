@@ -49,7 +49,7 @@ class Object {
 		throw \InvalidArgumentException('Haystack must be an array, object, or null.');
 	}
 	public static function classExists ($class) {
-		return in_array(substr($class,1),get_declared_classes());
+		return class_exists($class, false) || interface_exists($class, false);
 	}
 	public static function logError ($e) {
 		($logFile = Config::getErrorLog())
