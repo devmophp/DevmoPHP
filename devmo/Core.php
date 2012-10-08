@@ -46,7 +46,7 @@ class Object {
 				: $default;
 		if (is_null($haystack))
 			return $default;
-		throw \InvalidArgumentException('Haystack must be an array, object, or null.');
+		throw new InvalidException('haystack',$haystack,null,array('array','object','null'));
 	}
 	public static function classExists ($class) {
 		return class_exists($class, false) || interface_exists($class, false);
@@ -136,7 +136,7 @@ class Core extends Object {
 		// check for file
 		if ($option=='filebox') {
 			if (!$fileBox->getFile())
-				throw new FileNotFoundCoreException($path,self::getRequest());
+				throw new FileNotFoundCoreException($path,Config::getRequest());
 			return $fileBox;
 		}
 		// check for class

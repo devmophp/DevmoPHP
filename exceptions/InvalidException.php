@@ -3,19 +3,22 @@ namespace devmo\exceptions;
 class InvalidException extends \devmo\exceptions\Exception {
   private $field;
   private $label;
-  public function __construct ($field, $value=null, $label=null) {
+  public function __construct ($field, $value=null, $label=null, array $options=null) {
     $this->field = $field;
     $this->label = $label ?: ucfirst(preg_replace(array('/([A-Z]{1})/','/ Id/'),array(' \1',''),$field));
-		$debug = "";
+		$message = $value ? "Invalid {$this->label}" : "Missing {$this->label}";
 		if (\devmo\Config::isDebug()) {
-			$debug = ' [';
+			$message .= ' ([';
 			ob_start();
 			var_dump($value);
-			$debug .= ob_get_contents();
+			$message .= trim(ob_get_contents());
 			ob_end_clean();
-			$debug .= "] ({$this->file}:{$this->line})";
+			$message .= ']';
+			if ($options)
+				$message .= ' options:'.implode(',',$options);
+			$message .= " {$this->file}:{$this->line}) ";
 		}
-    parent::__construct(($value ? "Invalid {$this->label}" : "Missing {$this->label}").$debug);
+    parent::__construct($message);
   }
 	public function getField () {
 		return $this->field;
