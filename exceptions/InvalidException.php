@@ -1,32 +1,34 @@
 <?php
 namespace devmo\exceptions;
 class InvalidException extends \devmo\exceptions\Exception {
-  private $field;
-  private $label;
-  public function __construct ($field, $value=null, $label=null, array $options=null) {
-    $this->field = $field;
-    $this->label = $label ?: ucfirst(preg_replace(array('/([A-Z]{1})/','/ Id/'),array(' \1',''),$field));
-		$message = $value ? "Invalid {$this->label}" : "Missing {$this->label}";
-		if (\devmo\Config::isDebug()) {
-			$message .= ' ([';
-			ob_start();
-			var_dump($value);
-			$message .= trim(ob_get_contents());
-			ob_end_clean();
-			$message .= ']';
-			if ($options)
-				$message .= ' options:'.implode(',',$options);
-			$message .= " {$this->file}:{$this->line}) ";
-		}
+  private $name;
+	private $value;
+	private $options;
+  public function __construct ($name, $value=null, $options=null) {
+		$this->setName($name);
+		$this->setValue($value);
+		$this->setOptions($options);
+		$message = $this->value ? "invalid {$this->name}" : "missing {$this->name}";
+		if (\devmo\Config::isDebug())
+			$message .= ($this->value?' value:"'.print_r($this->value,true).'"':'').($this->options?' options:"'.implode('","',$this->options).'"':null)." {$this->file}:{$this->line}";
     parent::__construct($message);
   }
-	public function getField () {
-		return $this->field;
+	private function setName ($name) {
+		$this->name = trim($name);
 	}
-	public function getLabel () {
-		return $this->label;
+	private function setValue ($value) {
+		$this->value = $value;
 	}
-	public function setLabel ($label) {
-		$this->label = $label;
+	private function setOptions ($options) {
+		$this->options = is_array($options) ? $options : array($options);
+	}
+	public function getName () {
+		return $this->name;
+	}
+	public function getValue () {
+		return $this->value;
+	}
+	public function getOptions () {
+		return $this->options;
 	}
 }
