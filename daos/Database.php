@@ -2,7 +2,7 @@
 namespace devmo\daos;
 
 use \devmo\exceptions\CoreException;
-use \InvalidArgumentException;
+use \devmo\exceptions\InvalidException;
 /**
  * Common gateway for database queries and tools.
  *
@@ -120,7 +120,7 @@ class Database extends \devmo\Dao {
 	 */
 	protected function formatDate ($date=null, $nullable=true, $first=false) {
 		if (($date===null && !$nullable) || ($date!==null && !($date = strtotime($date))))
-			throw new InvalidArgumentException('Invalid Date');
+			throw new InvalidException('date',$date);
 		return $date===null ? 'NULL' : "'".date(($first?DATABASE_DATE_FIRST_FORMAT:DATABASE_DATE_FORMAT),$date)."'";
   }
 
@@ -134,7 +134,7 @@ class Database extends \devmo\Dao {
 	 */
 	protected function formatDateTime ($dateTime=null, $nullable=true) {
 		if (($dateTime===null && !$nullable) || ($dateTime!==null && !($dateTime = strtotime($dateTime))))
-			throw new InvalidArgumentException('Invalid DateTime');
+			throw new InvalidException('date time',$dateTime);
 		return $dateTime===null ? 'NULL' : "'".date(DATABASE_DATETIME_FORMAT,$dateTime)."'";
   }
 
@@ -148,7 +148,7 @@ class Database extends \devmo\Dao {
 	 */
 	protected function formatNumber ($number=null, $nullable=true) {
 		if (($number===null && !$nullable) || ($number!==null && !is_numeric($number)))
-			throw new InvalidArgumentException('Invalid Number');
+			throw new InvalidException('number',$number);
 		return $number===null ? 'NULL' : $number;
   }
 
@@ -162,7 +162,7 @@ class Database extends \devmo\Dao {
 	 */
 	protected function formatBoolean ($boolean=null, $nullable=true) {
 		if (($boolean===null && !$nullable) || ($boolean!==null && !is_bool($boolean)))
-			throw new InvalidArgumentException('Invalid Boolean');
+			throw new InvalidException('boolean',$boolean);
 		return ($boolean===null ? 'NULL' : ($boolean ? '1' : '0'));
   }
 
@@ -176,7 +176,7 @@ class Database extends \devmo\Dao {
 	 */
 	protected function formatText ($text=null, $nullable=true) {
 		if (!$nullable && $text===null)
-			throw new InvalidArgumentException('Invalid Text');
+			throw new InvalidException('text',$text);
 		return $text===null ? 'NULL' : "'".DatabaseBox::getDbh($this->dbk)->real_escape_string($text)."'";
   }
 
@@ -208,7 +208,7 @@ class ResultSetDatabaseDao implements \Iterator, \Countable {
 
 	public function __construct ($result) {
 		if (!($result instanceof \mysqli_result))
-			throw new InvalidArgumentException('DB Query Resource');
+			throw new InvalidException('db query resource',$result);
 		$this->result = $result;
 		$this->position = 0;
 	}
