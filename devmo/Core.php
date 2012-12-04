@@ -12,11 +12,15 @@ class Object {
 		return 'Object:\\'.get_class($this);
 	}
 	public static function debug ($mixed, $title=null, $option=null) {
-		print Config::isCli() ? null : '<pre>'.PHP_EOL;
+		print Config::isCli() ? null : '<pre>';
 		print PHP_EOL.$title.PHP_EOL;
 		switch ($option) {
 			default:
 				print_r($mixed);
+				break;
+			case 'pause':
+				print_r($mixed);
+				Config::isCli() ? fgets(STDIN) : trigger_error("'{$option}' is only used in cli mode",E_USER_WARNING);
 				break;
 			case 'fatal':
 				print_r($mixed);
@@ -33,9 +37,11 @@ class Object {
 				echo $mixed->asXML();
 				break;
 		}
-		print Config::isCli() ? null : PHP_EOL.'</pre>';
+		print Config::isCli() ? $option=='pause' ? null : PHP_EOL.PHP_EOL : PHP_EOL.'</pre>'.PHP_EOL;
 	}
 	public static function getValue ($needle, $haystack, $default=null) {
+		if (!is_string($needle) && !is_int($needle))
+			throw new InvalidException('needle type',gettype($needle),null,array('string','integer'));
 		if (is_array($haystack))
 			return isset($haystack[$needle])
 				? $haystack[$needle]
