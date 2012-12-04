@@ -52,7 +52,7 @@ class Object {
 				: $default;
 		if (is_null($haystack))
 			return $default;
-		throw new InvalidException('haystack',$haystack,null,array('array','object','null'));
+		throw new InvalidException('haystack',$haystack,array('array','object','null'));
 	}
 	public static function classExists ($class) {
 		return class_exists($class, false) || interface_exists($class, false);
