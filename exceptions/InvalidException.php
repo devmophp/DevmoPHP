@@ -28,7 +28,7 @@ class InvalidException extends \devmo\exceptions\Exception {
 	public function getValue () {
 		return $this->value;
 	}
-	public function getOptions () {
-		return $this->options;
+	public function getOptions ($toString=false) {
+		return $toString ? implode(',',$this->options) : $this->options;
 	}
 }
