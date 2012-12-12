@@ -59,8 +59,8 @@ class Object {
 	}
 	public static function logError ($e) {
 		($logFile = Config::getErrorLog())
-			? error_log((string)$e,3,$logFile)
-			: error_log((string)$e,0);
+			? error_log(date('Y-m-d H:i:s')."\t{$e}\n",3,$logFile)
+			: error_log(date('Y-m-d H:i:s')."\t{$e}\n",0);
 	}
 }
 
