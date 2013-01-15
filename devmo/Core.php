@@ -66,7 +66,7 @@ class Object {
 
 class Core extends Object {
 	private static $fileBoxes = array();
-	public static function execute ($path=false, $args=null) {
+	public static function execute ($path=false, $args=null, Controller $caller=null) {
 		// find controller
 		if (!($controller = $path) && Config::getRequestedController()) {
 			$controller = Config::getRequestedController();
@@ -84,21 +84,23 @@ class Core extends Object {
 			$controller = Config::getDefaultController();
 		}
 		//	get controller view
-		if (!$view = self::executeController($controller,$args))
+		if (!$view = self::executeController($controller,$args,null,$caller))
 			throw new CoreException('ViewNotFound',array('controller'=>$controller));
 		return $view;
 	}
 
-	private static function executeController ($path, array $args=null, $message=null) {
+	private static function executeController ($path, array $args=null, $message=null, Controller $caller=null) {
 		//  get controller object
 		$controller = self::load($path,'new');
 		if ($message)
 			$controller->setMessage($message);
+		if ($caller)
+			$controller->setCaller($caller);
 		//	run controller
 		$view = $controller->run($args);
 		//  forward to next controller
 		if ($controller->getForward())
-			return self::executeController($controller->getForward(),$args,$message);
+			return self::executeController($controller->getForward(),$args,$message,$caller);
 		// return only views
 		return $view instanceof View ? $view : null;
 	}
@@ -473,88 +475,69 @@ class Loader extends Object {
 }
 
 abstract class Controller extends Loader {
-  protected $forward = null;
-  protected $do = null;
-	protected $message = null;
-  protected $ajax = false;
-
-	public function setAjax ($ajax) {
-		$this->ajax = $ajax;
-	}
-
-	public function isAjax () {
-		return $this->ajax;
-	}
+	// TODO add returnType here (/sitemap.html | /sitemap.xml | /sitemap.json)
+  private $forward = null;
+	private $message = null;
+	private $caller = null;
 
   public function setForward ($controller) {
   	$this->forward = Core::formatPath($controller,'controllers',$this->getContext());
   }
-
   public function getForward () {
     return $this->forward;
   }
-
-  public function getDo () {
-    return $this->do;
-  }
-
   public function setMessage ($message) {
   	$this->message = $message;
   }
-
   public function getMessage () {
   	return $this->message;
   }
-
+	public function setCaller ($caller) {
+		$this->caller = $caller;
+	}
+	public function getCaller () {
+		return $this->caller;
+	}
   protected function getView ($path=null, $tokens=null) {
   	if (!$path)
   		$path = basename(str_replace('\\','/',$this->getClass()));
 		$path = Core::formatPath($path,'views',$this->getContext());
 		return new \devmo\View($path,$tokens);
   }
-
 	protected function getGet ($name, $default=false, $makeSafe=true) {
 		return (($value = self::getValue($name,$_GET,$default)) && $makeSafe)
 			? Core::makeSafe($value)
 			: $value;
 	}
-
 	protected function getPost ($name, $default=false, $makeSafe=true) {
 		return (($value = self::getValue($name,$_POST,$default)) && $makeSafe)
 			? Core::makeSafe($value)
 			: $value;
 	}
-
 	protected function getSession ($name, $default=false) {
 		if (!isset($_SESSION))
 			throw new \devmo\exceptions\Exception('session does not exist');
 		return self::getValue($name,$_SESSION,$default);
 	}
-
 	protected function getRequest ($name, $default=false, $makeSafe=true) {
 		return (($value = self::getValue($name,$_REQUEST,$default)) && $makeSafe)
 			? Core::makeSafe($value)
 			: $value;
 	}
-
 	protected function getRequestController () {
 		return Config::getRequestedController()
 			? Config::getRequestedController()
 			: Config::getDefaultController();
 	}
-
 	protected function getServer ($name, $default=false) {
 		return $this->getValue($name,$_SERVER,$default);
 	}
-
   protected function runController ($controller, $args=null) {
-  	return Core::execute(Core::formatPath($controller,'controllers',$this->getContext()),$args);
+		return Core::execute(Core::formatPath($controller,'controllers',$this->getContext()),$args,$this);
   }
-
 	protected function runRequest ($request, $args=null) {
-		return Core::execute(Core::formatRequestToPath($request),$args);
+		return Core::execute(Core::formatRequestToPath($request),$args,$this);
 	}
-
 	protected function formatRequest ($controller=null, array $get=null) {
 		$request = $controller===null
 				? Core::formatControllerToRequest($this->getPath())
@@ -567,7 +550,6 @@ abstract class Controller extends Loader {
 		}
 		return $request;
 	}
-
 	protected function redirect ($controller, array $get=null) {
 		$request = $this->formatRequest($controller,$get);
 		$view = $this->getView('devmo.HttpRaw');
@@ -576,7 +558,6 @@ abstract class Controller extends Loader {
 		print $view;
 		exit;
 	}
-
   abstract public function run (array $args=null);
 }
 
