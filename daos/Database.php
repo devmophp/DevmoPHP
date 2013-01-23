@@ -3,32 +3,19 @@ namespace devmo\daos;
 
 use \devmo\exceptions\CoreException;
 use \devmo\exceptions\InvalidException;
-/**
- * Common gateway for database queries and tools.
- *
- * @category Utility
- * @author Dan Wager
- * @version 1.0
- */
+
 class Database extends \devmo\Dao {
+	public static $dbhs = array();
 	private $host;
 	private $name;
 	private $user;
 	private $pass;
+	private $port;
 	private $record;
 	private $records;
 	private $iterator;
 
-
-	/**
-	 * __construct
-	 *
-	 * initializes class properties
-	 *
-	 * @access public
-	 * @return void
-	 */
-	public function __construct ($host, $user, $pass, $name=null) {
+	public function __construct ($host, $user, $pass, $name=null, $port=null) {
 		if (!defined('DATABASE_DATE_FORMAT'))
 			define('DATABASE_DATE_FORMAT','Y-m-d');
 		if (!defined('DATABASE_DATE_FIRST_FORMAT'))
@@ -39,26 +26,16 @@ class Database extends \devmo\Dao {
 		$this->user = $user;
 		$this->pass = $pass;
 		$this->name = $name;
-		$this->dbk = $this->host.$this->user.$this->name;
-		if (!DatabaseBox::getDbh($this->dbk))
-			$this->connect();
+		$this->port = $port ? (int) $port : null;
+		$this->dbk = "{$this->host}".($this->port?":{$this->port}":'').";{$this->user}".($this->name?";{$this->name}":'');
 	}
 
-
-	/**
-	 * connect
-	 *
-	 * handles database connection
-	 *
-	 * @access private
-	 * @return void
-	 */
 	protected function connect () {
-		if (!DatabaseBox::getDbh($this->dbk)) {
-			$mysqli = new \mysqli($this->host,$this->user,$this->pass,$this->name);
+		if (!self::getDbh($this->dbk)) {
+			$mysqli = new \mysqli($this->host,$this->user,$this->pass,$this->name,$this->port);
 			if (!($mysqli instanceof \mysqli))
 				throw new CoreException('Database',array('error'=>'Could not connect to the database'));
-			DatabaseBox::setDbh($this->dbk,$mysqli);
+			self::setDbh($this->dbk,$mysqli);
 			if ($this->name!=null)
 				$this->useSchema($this->name);
 		}
@@ -66,42 +43,26 @@ class Database extends \devmo\Dao {
 	}
 
 	protected function useSchema ($name) {
-		DatabaseBox::getDbh($this->dbk)->select_db($name);
+		self::getDbh($this->dbk)->select_db($name);
 	}
 
-
-	/**
-	 * disconnect
-	 *
-	 * discards current db connection
-	 *
-	 * @access private
-	 * @return void
-	 */
 	protected function disconnect () {
-		if (DatabaseBox::getDbh($this->dbk))
-			DatabaseBox::getDbh($this->dbk)->close();
+		if (self::getDbh($this->dbk))
+			self::getDbh($this->dbk)->close();
 		return true;
 	}
 
-
-	/**
-	 * query
-	 *
-	 * @access protected
-	 * @param mixed $sql
-	 * @return void
-	 */
 	protected function query ($sql, $add=null, $debug=false) {
 		if ($debug)
 			self::debug($sql,'Database::query::sql');
-		$dbh = DatabaseBox::getDbh($this->dbk);
+		if (!($dbh = self::getDbh($this->dbk)))
+			$this->connect();
 		if (!$result = $dbh->query($sql))
 			throw new CoreException('Database',array('errorno'=>$dbh->errno,'error'=>$dbh->error.PHP_EOL.preg_replace('=\s+=',' ',$sql)));
 		if ($result instanceof \mysqli_result)
 			return new ResultSetDatabaseDao($result);
 		if ($add) {
-			$id = DatabaseBox::getDbh($this->dbk)->insert_id;
+			$id = self::getDbh($this->dbk)->insert_id;
 			if ($add instanceof \devmo\Dto)
 				$add->setId($id);
 			return $id;
@@ -109,83 +70,49 @@ class Database extends \devmo\Dao {
 		return true;
 	}
 
-
-
-	/**
-	 * formatDate
-	 *
-	 * @access protected
-	 * @param mixed $date
-	 * @return void
-	 */
 	protected function formatDate ($date=null, $nullable=true, $first=false) {
-		if (($date===null && !$nullable) || ($date!==null && !($date = strtotime($date))))
-			throw new InvalidException('date',$date);
-		return $date===null ? 'NULL' : "'".date(($first?DATABASE_DATE_FIRST_FORMAT:DATABASE_DATE_FORMAT),$date)."'";
+		if ($date===null) {
+			if (!$nullable)
+				throw new InvalidException('Date');
+			return 'NULL';
+		}
+		if ($date instanceof \DateTime)
+			return '\''.$date->format(($first?DATABASE_DATE_FIRST_FORMAT:DATABASE_DATE_FORMAT)).'\'';
+		if (!($date = strtotime($date)))
+				throw new InvalidException('Date');
+		return "'".date(($first?DATABASE_DATE_FIRST_FORMAT:DATABASE_DATE_FORMAT),$date)."'";
   }
 
-
-	/**
-	 * formatDateTime
-	 *
-	 * @access protected
-	 * @param mixed $dateTime
-	 * @return void
-	 */
 	protected function formatDateTime ($dateTime=null, $nullable=true) {
-		if (($dateTime===null && !$nullable) || ($dateTime!==null && !($dateTime = strtotime($dateTime))))
-			throw new InvalidException('date time',$dateTime);
-		return $dateTime===null ? 'NULL' : "'".date(DATABASE_DATETIME_FORMAT,$dateTime)."'";
+		if ($dateTime===null) {
+			if (!$nullable)
+				throw new InvalidException('DateTime');
+			return 'NULL';
+		}
+		if ($dateTime instanceof \DateTime)
+			return '\''.$dateTime->format(DATABASE_DATETIME_FORMAT).'\'';
+		if (!($dateTime = strtotime($dateTime)))
+				throw new InvalidException('DateTime');
+		return "'".date(DATABASE_DATETIME_FORMAT,$dateTime)."'";
   }
 
-
-	/**
-	 * formatNumber
-	 *
-	 * @access protected
-	 * @param mixed $number
-	 * @return void
-	 */
 	protected function formatNumber ($number=null, $nullable=true) {
 		if (($number===null && !$nullable) || ($number!==null && !is_numeric($number)))
 			throw new InvalidException('number',$number);
 		return $number===null ? 'NULL' : $number;
   }
 
-
-	/**
-	 * formatBoolean
-	 *
-	 * @access protected
-	 * @param mixed $number
-	 * @return void
-	 */
 	protected function formatBoolean ($boolean=null, $nullable=true) {
 		if (($boolean===null && !$nullable) || ($boolean!==null && !is_bool($boolean)))
 			throw new InvalidException('boolean',$boolean);
 		return ($boolean===null ? 'NULL' : ($boolean ? '1' : '0'));
   }
 
-
-	/**
-	 * formatText
-	 *
-	 * @access protected
-	 * @param mixed $text
-	 * @return void
-	 */
 	protected function formatText ($text=null, $nullable=true) {
 		if (!$nullable && $text===null)
 			throw new InvalidException('text',$text);
-		return $text===null ? 'NULL' : "'".DatabaseBox::getDbh($this->dbk)->real_escape_string($text)."'";
+		return $text===null ? 'NULL' : "'".self::getDbh($this->dbk)->real_escape_string($text)."'";
   }
-
-}
-
-
-
-class DatabaseBox {
-	public static $dbhs = array();
 
 	public static function getDbh ($dbhKey) {
 		return empty(self::$dbhs[$dbhKey])
@@ -196,8 +123,8 @@ class DatabaseBox {
 	public static function setDbh ($dbhKey,$dbh) {
 		self::$dbhs[$dbhKey] = $dbh;
 	}
-}
 
+}
 
 
 class ResultSetDatabaseDao implements \Iterator, \Countable {
