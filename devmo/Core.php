@@ -83,6 +83,9 @@ class Core extends Object {
 		if (!$controller || $controller === '/') {
 			$controller = Config::getDefaultController();
 		}
+		// set up clli args
+		if (!$args && !$caller && Config::isCli())
+			$args = self::getValue('argv',$_SERVER);
 		//	get controller view
 		if (!$view = self::executeController($controller,$args,null,$caller))
 			throw new CoreException('ViewNotFound',array('controller'=>$controller));
@@ -476,7 +479,7 @@ class Loader extends Object {
 
 abstract class Controller extends Loader {
 	// TODO add returnType here (/sitemap.html | /sitemap.xml | /sitemap.json)
-  private $forward = null;
+	private $forward = null;
 	private $message = null;
 	private $caller = null;
 

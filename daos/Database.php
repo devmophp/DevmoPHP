@@ -31,15 +31,15 @@ class Database extends \devmo\Dao {
 	}
 
 	protected function connect () {
-		if (!self::getDbh($this->dbk)) {
-			$mysqli = new \mysqli($this->host,$this->user,$this->pass,$this->name,$this->port);
-			if (!($mysqli instanceof \mysqli))
+		if (!($dbh = self::getDbh($this->dbk))) {
+			$dbh = new \mysqli($this->host,$this->user,$this->pass,$this->name,$this->port);
+			if (!($dbh instanceof \mysqli))
 				throw new CoreException('Database',array('error'=>'Could not connect to the database'));
-			self::setDbh($this->dbk,$mysqli);
+			self::setDbh($this->dbk,$dbh);
 			if ($this->name!=null)
 				$this->useSchema($this->name);
 		}
-		return true;
+		return $dbh;
 	}
 
 	protected function useSchema ($name) {
@@ -56,7 +56,7 @@ class Database extends \devmo\Dao {
 		if ($debug)
 			self::debug($sql,'Database::query::sql');
 		if (!($dbh = self::getDbh($this->dbk)))
-			$this->connect();
+			$dbh = $this->connect();
 		if (!$result = $dbh->query($sql))
 			throw new CoreException('Database',array('errorno'=>$dbh->errno,'error'=>$dbh->error.PHP_EOL.preg_replace('=\s+=',' ',$sql)));
 		if ($result instanceof \mysqli_result)
@@ -220,6 +220,14 @@ class ResultSetDatabaseDao implements \Iterator, \Countable {
 			$objs[] = $x;
 		}
 		return $objs;
+	}
+
+	function getRow () {
+		return ($x = $this->result->fetch_row()) ? $this->dto ? new $this->dto($x) : $x : false;
+	}
+
+	function getArray () {
+		return ($x = $this->result->fetch_array()) ? $this->dto ? new $this->dto($x) : $x : false;
 	}
 
 }
