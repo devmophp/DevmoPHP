@@ -30,7 +30,7 @@ class Database extends \devmo\Dao {
 		$this->dbk = "{$this->host}".($this->port?":{$this->port}":'').";{$this->user}".($this->name?";{$this->name}":'');
 	}
 
-	protected function connect () {
+	protected function getConnection () {
 		if (!($dbh = self::getDbh($this->dbk))) {
 			$dbh = new \mysqli($this->host,$this->user,$this->pass,$this->name,$this->port);
 			if (!($dbh instanceof \mysqli))
@@ -43,7 +43,7 @@ class Database extends \devmo\Dao {
 	}
 
 	protected function useSchema ($name) {
-		self::getDbh($this->dbk)->select_db($name);
+		$this->getConnection()->select_db($name);
 	}
 
 	protected function disconnect () {
@@ -55,14 +55,13 @@ class Database extends \devmo\Dao {
 	protected function query ($sql, $add=null, $debug=false) {
 		if ($debug)
 			self::debug($sql,'Database::query::sql');
-		if (!($dbh = self::getDbh($this->dbk)))
-			$dbh = $this->connect();
+		$dbh = $this->getConnection();
 		if (!$result = $dbh->query($sql))
 			throw new CoreException('Database',array('errorno'=>$dbh->errno,'error'=>$dbh->error.PHP_EOL.preg_replace('=\s+=',' ',$sql)));
 		if ($result instanceof \mysqli_result)
 			return new ResultSetDatabaseDao($result);
 		if ($add) {
-			$id = self::getDbh($this->dbk)->insert_id;
+			$id = $this->getConnection()->insert_id;
 			if ($add instanceof \devmo\Dto)
 				$add->setId($id);
 			return $id;
@@ -111,7 +110,7 @@ class Database extends \devmo\Dao {
 	protected function formatText ($text=null, $nullable=true) {
 		if (!$nullable && $text===null)
 			throw new InvalidException('text',$text);
-		return $text===null ? 'NULL' : "'".self::getDbh($this->dbk)->real_escape_string($text)."'";
+		return $text===null ? 'NULL' : "'".$this->getConnection()->real_escape_string($text)."'";
   }
 
 	public static function getDbh ($dbhKey) {
