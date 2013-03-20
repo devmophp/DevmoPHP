@@ -556,7 +556,7 @@ abstract class Controller extends Loader {
 	protected function redirect ($controller, array $get=null) {
 		$request = $this->formatRequest($controller,$get);
 		$view = $this->getView('devmo.HttpRaw');
-		$view->code = 200;
+		$view->code = 302;
 		$view->headers = array("Location: {$request}");
 		print $view;
 		exit;
