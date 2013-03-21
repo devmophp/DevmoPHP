@@ -626,12 +626,9 @@ class View extends Object {
 	}
 }
 
-
 abstract class Logic extends Loader {}
-
-
+abstract class Library extends Object {}
 abstract class Dao extends Object {}
-
 
 abstract class Dto extends \devmo\Box {
 	protected $id;
