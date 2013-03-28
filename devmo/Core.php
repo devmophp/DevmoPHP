@@ -147,13 +147,13 @@ class Core extends Object {
 		// check for file
 		if ($option=='filebox') {
 			if (!$fileBox->getFile())
-				throw new FileNotFoundCoreException($path,Config::getRequest());
+				throw new FileNotFoundCoreException($path,$xFile,Config::getRequest());
 			return $fileBox;
 		}
 		// check for class
 		if (!self::classExists($fileBox->getClass())) {
 			if (!$fileBox->getFile())
-				throw new FileNotFoundCoreException($fileBox->getPath(),Config::getRequest());
+				throw new FileNotFoundCoreException($fileBox->getPath(),$xFile,Config::getRequest());
 			require_once($fileBox->getFile());
 			if (!self::classExists($fileBox->getClass()))
 				throw new CoreException('ClassNotFound',array('class'=>$fileBox->getClass(),'file'=>$fileBox->getFile()));
@@ -507,33 +507,33 @@ abstract class Controller extends Loader {
 		$path = Core::formatPath($path,'views',$this->getContext());
 		return new \devmo\View($path,$tokens);
   }
-	protected function getGet ($name, $default=false, $makeSafe=true) {
+	protected static function getGet ($name, $default=false, $makeSafe=true) {
 		return (($value = self::getValue($name,$_GET,$default)) && $makeSafe)
 			? Core::makeSafe($value)
 			: $value;
 	}
-	protected function getPost ($name, $default=false, $makeSafe=true) {
+	protected static function getPost ($name, $default=false, $makeSafe=true) {
 		return (($value = self::getValue($name,$_POST,$default)) && $makeSafe)
 			? Core::makeSafe($value)
 			: $value;
 	}
-	protected function getSession ($name, $default=false) {
+	protected static function getRequest ($name, $default=false, $makeSafe=true) {
+		return (($value = self::getValue($name,$_REQUEST,$default)) && $makeSafe)
+			? Core::makeSafe($value)
+			: $value;
+	}
+	protected static function getSession ($name, $default=false) {
 		if (!isset($_SESSION))
 			throw new \devmo\exceptions\Exception('session does not exist');
 		return self::getValue($name,$_SESSION,$default);
 	}
-	protected function getRequest ($name, $default=false, $makeSafe=true) {
-		return (($value = self::getValue($name,$_REQUEST,$default)) && $makeSafe)
-			? Core::makeSafe($value)
-			: $value;
+	protected static function getServer ($name, $default=false) {
+		return self::getValue($name,$_SERVER,$default);
 	}
 	protected function getRequestController () {
 		return Config::getRequestedController()
 			? Config::getRequestedController()
 			: Config::getDefaultController();
-	}
-	protected function getServer ($name, $default=false) {
-		return $this->getValue($name,$_SERVER,$default);
 	}
   protected function runController ($controller, $args=null) {
 		return Core::execute(Core::formatPath($controller,'controllers',$this->getContext()),$args,$this);
