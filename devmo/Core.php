@@ -530,10 +530,11 @@ abstract class Controller extends Loader {
 	protected static function getServer ($name, $default=false) {
 		return self::getValue($name,$_SERVER,$default);
 	}
+	protected static function getCookie ($name, $default=false) {
+		return self::getValue($name,$_COOKIE,$default);
+	}
 	protected function getRequestController () {
-		return Config::getRequestedController()
-			? Config::getRequestedController()
-			: Config::getDefaultController();
+		return Config::getRequestedController() ?: Config::getDefaultController();
 	}
   protected function runController ($controller, $args=null) {
 		return Core::execute(Core::formatPath($controller,'controllers',$this->getContext()),$args,$this);
