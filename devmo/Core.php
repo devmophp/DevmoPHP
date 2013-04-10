@@ -550,13 +550,11 @@ abstract class Controller extends Loader {
 			$request .= '?' . http_build_query($get);
 		return $request;
 	}
-	protected function redirect ($controller, array $get=null) {
-		$request = $this->formatRequest($controller,$get);
-		$view = $this->getView('devmo.HttpRaw');
-		$view->code = 302;
-		$view->headers = array("Location: {$request}");
-		print $view;
-		exit;
+	protected function getRedirect ($url, $code = 302) {
+		return $this->getView('devmo.HttpRaw', array(
+			'code' => $code,
+			'headers' => array("Location: {$url}")
+		));
 	}
   abstract public function run (array $args=null);
 }
