@@ -40,18 +40,15 @@ class Object {
 		print Config::isCli() ? $option=='pause' ? null : PHP_EOL.PHP_EOL : PHP_EOL.'</pre>'.PHP_EOL;
 	}
 	public static function getValue ($needle, $haystack, $default=null) {
-		if (!is_string($needle) && !is_int($needle))
-			throw new InvalidException('needle type',gettype($needle),null,array('string','integer'));
-		if (is_array($haystack))
-			return isset($haystack[$needle])
-				? $haystack[$needle]
-				: $default;
-		if (is_object($haystack))
-			return isset($haystack->{$needle})
-				? $haystack->{$needle}
-				: $default;
-		if (is_null($haystack))
+		if ($haystack===null)
 			return $default;
+		if (is_array($haystack))
+			return isset($haystack[$needle]) ? $haystack[$needle] : $default;
+		if (is_object($haystack)) {
+			if ($needle===null)
+				throw new InvalidException('needle',$needle);
+			return isset($haystack->{$needle}) ? $haystack->{$needle} : $default;
+		}
 		throw new InvalidException('haystack',$haystack,array('array','object','null'));
 	}
 	public static function classExists ($class) {
@@ -74,7 +71,7 @@ class Core extends Object {
 			if (Config::hasRequestControllerMap()) {
 				foreach (Config::getRequestControllerMap() as $pattern=>$useController) {
 					if (preg_match($pattern,$controller)) {
-						$controller  = $useController;
+						$controller = $useController;
 						break;
 					}
 				}
@@ -254,7 +251,7 @@ class Core extends Object {
   }
 
 	public static function formatPath ($path, $type, $context=null) {
-		if (!preg_match('/^(?P<path>.*?\.)?(?P<type>[^\.]+\.)?(?P<class>[^\.]+)$/',$path,$parts))
+		if (!is_string($path) || !preg_match('/^(?P<path>.*?\.)?(?P<type>[^\.]+\.)?(?P<class>[^\.]+)$/',$path,$parts))
 			throw new InvalidException('path',$path);
 		$parts += array('path'=>null,'type'=>null,'class'=>null);
 		if ($parts['path']==null || $parts['path']=='.')
@@ -276,8 +273,8 @@ class Core extends Object {
 	public static function formatControllerToRequest ($controller) {
 		return preg_replace('='.Config::getRequest().'$=','',self::getValue('PHP_SELF',$_SERVER))
 				.preg_replace(
-						array('/^'.Config::getDefaultNamespace().'/','/controllers?\./','/\.+/'),
-						array('','','/'),
+						array('/^'.Config::getDefaultNamespace().'/','/controllers?\./','/\.+/','/^([^\/]{1})/'),
+						array('','','/','/\1'),
 						$controller);
 	}
 
@@ -344,7 +341,7 @@ class Config extends Object{
 	public static function setRequest ($request=null) {
 		if ($request && ($request = preg_replace('=/+=','/',$request)) && $request!='/') {
 			self::$request = $request;
-			self::$requestedController = Core::formatRequestToPath($request);
+			self::$requestedController = Core::formatRequestToPath(preg_replace('=\/\d+$=','',$request));
 		}
 	}
 	public static function setDebug ($debug=false) {
@@ -483,30 +480,30 @@ abstract class Controller extends Loader {
 	private $message = null;
 	private $caller = null;
 
-  public function setForward ($controller) {
-  	$this->forward = Core::formatPath($controller,'controllers',$this->getContext());
-  }
-  public function getForward () {
-    return $this->forward;
-  }
-  public function setMessage ($message) {
-  	$this->message = $message;
-  }
-  public function getMessage () {
-  	return $this->message;
-  }
+	public function setForward ($controller) {
+		$this->forward = Core::formatPath($controller,'controllers',$this->getContext());
+	}
+	public function getForward () {
+		return $this->forward;
+	}
+	public function setMessage ($message) {
+		$this->message = $message;
+	}
+	public function getMessage () {
+		return $this->message;
+	}
 	public function setCaller ($caller) {
 		$this->caller = $caller;
 	}
 	public function getCaller () {
 		return $this->caller;
 	}
-  protected function getView ($path=null, $tokens=null) {
-  	if (!$path)
-  		$path = basename(str_replace('\\','/',$this->getClass()));
+	protected function getView ($path=null, $tokens=null) {
+		if (!$path)
+			$path = basename(str_replace('\\','/',$this->getClass()));
 		$path = Core::formatPath($path,'views',$this->getContext());
 		return new \devmo\View($path,$tokens);
-  }
+	}
 	protected static function getGet ($name, $default=false, $makeSafe=true) {
 		return (($value = self::getValue($name,$_GET,$default)) && $makeSafe)
 			? Core::makeSafe($value)
@@ -536,9 +533,9 @@ abstract class Controller extends Loader {
 	protected function getRequestController () {
 		return Config::getRequestedController() ?: Config::getDefaultController();
 	}
-  protected function runController ($controller, $args=null) {
+	protected function runController ($controller, $args=null) {
 		return Core::execute(Core::formatPath($controller,'controllers',$this->getContext()),$args,$this);
-  }
+	}
 	protected function runRequest ($request, $args=null) {
 		return Core::execute(Core::formatRequestToPath($request),$args,$this);
 	}
@@ -546,8 +543,11 @@ abstract class Controller extends Loader {
 		$request = $controller===null
 				? Core::formatControllerToRequest($this->getPath())
 				: Core::formatControllerToRequest(Core::formatPath($controller,'controller',$this->getContext()));
-		if (!empty($get))
-			$request .= '?' . http_build_query($get);
+		if (count($get)>0) {
+			$request .= '?';
+			foreach ($get as $k=>$v)
+				$request .= '&'.urlencode($k).'='.urlencode($v);
+		}
 		return $request;
 	}
 	protected function getRedirect ($url, $code = 302) {
@@ -556,7 +556,7 @@ abstract class Controller extends Loader {
 			'headers' => array("Location: {$url}")
 		));
 	}
-  abstract public function run (array $args=null);
+	abstract public function run (array $args=null);
 }
 
 
@@ -564,7 +564,6 @@ class View extends Object {
 	private $myPath = null;
 	private $myParent = null;
 	private $myTokens = null;
-
 	public function __construct ($path, $tokens=null) {
 		$this->myPath = $path;
 		if (!$tokens) {
@@ -577,19 +576,16 @@ class View extends Object {
 			$this->myTokens = $tokens;
 		}
 	}
-
-  public function __set ($name, $value) {
+	public function __set ($name, $value) {
 		if ($value===$this)
 			throw new DevmoException('Token Value Is Circular Reference');
 		if (is_object($value) && $value instanceof View)
 			$value->parent = $this;
 		$this->myTokens->{$name} = $value;
-  }
-
-	public function __get ($name) {
-		return $this->getValue($name,$this->myTokens);
 	}
-
+	public function __get ($name) {
+		return self::getValue($name,$this->myTokens);
+	}
 	public function __toString () {
 		ob_start();
 		try {
@@ -601,13 +597,11 @@ class View extends Object {
 		ob_end_clean();
 		return $x;
 	}
-
 	public function getRoot () {
 		return $this->myParent
 			? $this->myParent->getRoot()
 			: $this;
 	}
-
 	public function setTokens ($tokens) {
 		if (is_array($tokens) || is_object($tokens)) {
 			foreach ($tokens as $k=>$v) {
@@ -615,7 +609,6 @@ class View extends Object {
 			}
 		}
 	}
-
 	public function getTokens () {
 		return $this->myTokens;
 	}
@@ -645,6 +638,7 @@ abstract class Dto extends \devmo\Box {
 					$this->{$k} = self::getValue($k,$record);
 		}
 	}
+	// TODO remove (get|set)Id to not enforce pk policy
 	public function setId ($id) {
 		if (!preg_match('/^\d+$/',$id))
 			throw new InvalidException('id',$id);
@@ -657,30 +651,26 @@ abstract class Dto extends \devmo\Box {
 
 
 class Exception extends \LogicException {
-  private $path;
-  private $info;
-
-  public function __construct ($text, $path=null) {
-    parent::__construct($text);
-    $this->path = $path;
-    $this->extra = null;
-  }
-
-  public function getPath () {
-    return $this->path;
-  }
-
-  public function setInfo ($info) {
-    $this->info = $info;
-  }
-
-  public function __toString () {
+	private $path;
+	private $info;
+	public function __construct ($text, $path=null) {
+		parent::__construct($text);
+		$this->path = $path;
+		$this->extra = null;
+	}
+	public function getPath () {
+		return $this->path;
+	}
+	public function setInfo ($info) {
+		$this->info = $info;
+	}
+	public function __toString () {
 		$err = "What: ".$this->getMessage()
 				.PHP_EOL."When: ".date('Y-m-d H:m:s')
 				.($this->path ? PHP_EOL."Path: {$this->path}" : null)
 				.($this->info ? PHP_EOL."Info: {$this->info}" : null)
 				.PHP_EOL."Where: {$this->file}:{$this->line}";
-    foreach ($this->getTrace() as $i=>$x) {
+		foreach ($this->getTrace() as $i=>$x) {
 			$args = "";
 			foreach ($x['args'] as $xa) {
 				if (is_array($xa)) {
@@ -691,16 +681,15 @@ class Exception extends \LogicException {
 					$args .= ($args?',':null).var_export($xa, true);
 				}
 			}
-      $err .= PHP_EOL
+			$err .= PHP_EOL
 					.(isset($x['file'])?"{$x['file']}:{$x['line']}":null)
 					.(isset($x['class'])?" {$x['class']}{$x['type']}":null)
 					.(isset($x['function'])?$x['function'].'('.$args.') ':null);
-    }
+		}
 		$err .= PHP_EOL;
-    return $err;
-  }
-
-  public function __toViewString () {
+		return $err;
+	}
+	public function __toViewString () {
 		$err = "What: ".$this->getMessage()
 				.PHP_EOL."When: ".date('Y-m-d H:m:s')
 				.($this->path ? PHP_EOL."Path: {$this->path}" : null)
@@ -709,6 +698,8 @@ class Exception extends \LogicException {
 		$devmoPath = Config::getPathForNamespace('devmo');
 		$trace = $this->getTrace();
 		foreach ($trace as $i=>$x) {
+			if (Devmo::getValue('class',$x)=='devmo\Core')
+				continue;
 			$args = array();
 			foreach ($x['args'] as $xa) {
 				if (is_array($xa)) {
@@ -720,13 +711,12 @@ class Exception extends \LogicException {
 				}
 				$err .= (isset($x['file'])?"{$x['file']}:{$x['line']}":null)
 						 .(isset($x['class'])?" {$x['class']}{$x['type']}":null)
-						 .(isset($x['function'])?$x['function'].'('.implode(', ',$args).') ':null)
+						 .(isset($x['function'])?" {$x['function']}(".implode(', ',$args).')':null)
 						 .PHP_EOL;
 			}
 		}
-    return $err;
-  }
-
+		return $err;
+	}
 }
 
 
