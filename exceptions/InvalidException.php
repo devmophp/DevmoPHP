@@ -8,7 +8,7 @@ class InvalidException extends \devmo\exceptions\Exception {
 		$this->setName($name);
 		$this->setValue($value);
 		$this->setOptions($options);
-		$message = $this->value ? "invalid {$this->name}" : "missing {$this->name}";
+		$message = $this->value ? "Invalid {$this->name}" : "Missing {$this->name}";
 		if (\devmo\Config::isDebug())
 			$message .= ($this->value?' value:"'.print_r($this->value,true).'"':'').($this->options?' options:"'.implode('","',$this->options).'"':null)." {$this->file}:{$this->line}";
     parent::__construct($message);
@@ -20,7 +20,7 @@ class InvalidException extends \devmo\exceptions\Exception {
 		$this->value = $value;
 	}
 	private function setOptions ($options) {
-		$this->options = is_array($options) ? $options : array($options);
+		$this->options = (is_array($options) ? $options : ($options ? array($options) : null));
 	}
 	public function getName () {
 		return $this->name;
