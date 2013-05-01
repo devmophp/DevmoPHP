@@ -625,17 +625,12 @@ abstract class Dto extends \devmo\Box {
 			if ($record!=null && !(is_object($record) || is_array($record)))
 				throw new \devmo\exceptions\Exception('record is not iterable');
 			$fields = $this;
-			if ($validate) {
+			if ($validate)
 				$fields = array_intersect_key(
-					is_object($record) ? get_object_vars($record) : $record,
-					get_object_vars($this)
-				);
-			}
+						(is_object($record) ? get_object_vars($record) : $record),
+						get_object_vars($this));
 			foreach ($fields as $k=>$v)
-				if ($validate)
-					$this->__set($k, self::getValue($k,$record));
-				else
-					$this->{$k} = self::getValue($k,$record);
+				$validate ? $this->__set($k, self::getValue($k,$record)) : $this->{$k} = self::getValue($k,$record);
 		}
 	}
 	// TODO remove (get|set)Id to not enforce pk policy
