@@ -271,11 +271,10 @@ class Core extends Object {
 	}
 
 	public static function formatControllerToRequest ($controller) {
-		return preg_replace('='.Config::getRequest().'$=','',self::getValue('PHP_SELF',$_SERVER))
-				.preg_replace(
-						array('/^'.Config::getDefaultNamespace().'/','/controllers?\./','/\.+/','/^([^\/]{1})/'),
-						array('','','/','/\1'),
-						$controller);
+		return Config::getRequestBase().preg_replace(
+				array('/^'.Config::getDefaultNamespace().'/','/controllers?\./','/\.+/','/^([^\/]{1})/'),
+				array('','','/','/\1'),
+				$controller);
 	}
 
 }
@@ -305,6 +304,7 @@ class Config extends Object{
 	private static $defaultController = null;
 	private static $defaultNamespace = null;
 	private static $errorLogFile = null;
+	private static $requestBase = null;
 	private static $request = null;
 	private static $debug = false;
 	private static $cli = false;
@@ -314,10 +314,8 @@ class Config extends Object{
 
 	# for application use
 	public static function addNamespacePathMapping ($namespace, $path, $default=false) {
-		foreach (self::$typeNamespacePathMap as $k=>$v) {
+		foreach (self::$typeNamespacePathMap as $k=>$v)
 			self::$typeNamespacePathMap[$k][$namespace] = $path;
-			uasort(self::$typeNamespacePathMap[$k],function ($a,$b) { return strlen($b)-strlen($a); });
-		}
 		if ($default || (self::$defaultNamespace==null && $namespace!='devmo'))
 			self::$defaultNamespace = $namespace;
 	}
@@ -338,6 +336,10 @@ class Config extends Object{
 	public static function setRequestNotFoundController ($controller) {
 		self::$requestNotFoundController = Core::formatPath($controller,'controllers');
 	}
+	public static function setRequestBase ($requestBase=null) {
+		if ($requestBase)
+			self::$requestBase = ($x = trim($requestBase,'/')) ? "/{$x}" : null;
+	}
 	public static function setRequest ($request=null) {
 		if ($request && ($request = preg_replace('=/+=','/',$request)) && $request!='/') {
 			self::$request = $request;
@@ -352,6 +354,13 @@ class Config extends Object{
 	}
 
 	# for framework use
+	public static function sortNamespacePathMap () {
+		foreach(self::$typeNamespacePathMap as $type=>$namespaces)
+			uasort(self::$typeNamespacePathMap[$type],function ($a,$b) { return strlen($b)-strlen($a); });
+	}
+	public static function getRequestBase () {
+		return self::$requestBase;
+	}
 	public static function getRequest () {
 		return self::$request;
 	}

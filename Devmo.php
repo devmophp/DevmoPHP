@@ -10,10 +10,12 @@ use \devmo\Config;
 // class
 class Devmo extends \devmo\Object {
 	public static function run () {
+		Config::sortNamespacePathMap();
 		return Core::execute()->getRoot();
 	}
 }
 // set default configs
 Config::init();
 Config::addNamespacePathMapping('devmo',DEVMO_PATH,false);
+Config::setRequestBase(Devmo::getValue('SCRIPT_NAME',$_SERVER));
 Config::setRequest(Devmo::getValue('PATH_INFO',$_SERVER));
