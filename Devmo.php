@@ -9,9 +9,15 @@ use \devmo\Core;
 use \devmo\Config;
 // class
 class Devmo extends \devmo\Object {
-	public static function run () {
+	private static $init = false;
+	private static function init () {
 		Config::sortNamespacePathMap();
-		return Core::execute()->getRoot();
+		self::$init = true;
+	}
+	public static function run ($controller=null, $args=null) {
+		if (!self::$init)
+			self::init();
+		return Core::execute(($controller ? Core::formatPath($controller,'controllers') : null),$args)->getRoot();
 	}
 }
 // set default configs
