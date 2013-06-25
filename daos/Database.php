@@ -33,8 +33,8 @@ class Database extends \devmo\Dao {
 	protected function getConnection () {
 		if (!($dbh = self::getDbh($this->dbk))) {
 			$dbh = new \mysqli($this->host,$this->user,$this->pass,$this->name,$this->port);
-			if (!($dbh instanceof \mysqli))
-				throw new CoreException('Database',array('error'=>'Could not connect to the database'));
+			if ($dbh->connect_error)
+				throw new CoreException('Database',array('errno'=>$dbh->connect_errno,'error'=>$dbh->connect_error));
 			self::setDbh($this->dbk,$dbh);
 			if ($this->name!=null)
 				$this->useSchema($this->name);
