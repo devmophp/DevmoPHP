@@ -12,32 +12,35 @@ class Object {
 		return 'Object:\\'.get_class($this);
 	}
 	public static function debug ($mixed, $title=null, $option=null) {
-		print Config::isCli() ? null : '<pre>';
-		print PHP_EOL.$title.PHP_EOL;
+		$buffer = '';
 		switch ($option) {
 			default:
-				print_r($mixed);
+				$buffer = print_r($mixed,true);
 				break;
 			case 'pause':
-				print_r($mixed);
+				$buffer = print_r($mixed,true);
 				Config::isCli() ? fgets(STDIN) : trigger_error("'{$option}' is only used in cli mode",E_USER_WARNING);
 				break;
 			case 'fatal':
-				print_r($mixed);
+				$buffer = print_r($mixed,true);
 				exit;
 				break;
 			case 'trace':
-				debug_print_backtrace();
-				print_r($mixed);
+				foreach (debug_backtrace() as $i=>$x)
+					$buffer = "{$i} ".($x['function']?($x['object']?"{$x['object']}::":null)."{$x['function']}(".implode(',',$x['args']).") ":null)."{$x['file']}:{$x['line']}".PHP_EOL;
+				$buffer .= print_r($mixed,true);
 				break;
 			case 'obj':
-				print_r($mixed);
+				$buffer = print_r($mixed,true);
 				break;
 			case 'xml':
-				echo $mixed->asXML();
+				$buffer = $mixed->asXML();
 				break;
 		}
-		print Config::isCli() ? $option=='pause' ? null : PHP_EOL.PHP_EOL : PHP_EOL.'</pre>'.PHP_EOL;
+		$buffer = (Config::isCli() ? null : '<pre>').PHP_EOL.$title.PHP_EOL.$buffer.(Config::isCli() ? ($option=='pause' ? null : PHP_EOL.PHP_EOL) : PHP_EOL.'</pre>'.PHP_EOL);
+		if ($option=='return')
+			return $buffer;
+		print $buffer;
 	}
 	public static function getValue ($needle, $haystack, $default=null) {
 		if ($haystack===null)
@@ -155,9 +158,6 @@ class Core extends Object {
 			if (!self::classExists($fileBox->getClass()))
 				throw new CoreException('ClassNotFound',array('class'=>$fileBox->getClass(),'file'=>$fileBox->getFile()));
 		}
-		// return if we aren't doing anything else
-		if ($option=='static')
-			return true;
 		// check for parent class
 		$parentClass = null;
 		switch ($fileBox->getType()) {
@@ -178,6 +178,9 @@ class Core extends Object {
 					? call_user_func(array($class,'getInstance'))
 					: new $class;
 				break;
+			case 'static':
+				if (!in_array('getInstance',get_class_methods($class)))
+					return true;
 			case 'singleton':
 				$obj = $class::getInstance($args);
 				break;
@@ -189,7 +192,7 @@ class Core extends Object {
 			throw new CoreException('ClassNotController',array('class'=>$fileBox->getClass(),'file'=>$fileBox->getFile()));
 		if ($obj instanceof Loader)
 			$obj->setFileBox($fileBox);
-		return $obj;
+		return $option=='static' ? true : $obj;
 	}
 
 	public static function makeSafe ($value) {
@@ -237,10 +240,6 @@ class Core extends Object {
 	}
 
   public static function loadClass ($class) {
-    if (strstr($class,'\\'))
-      $class = str_replace(array('/','\\'),'.',$class);
-    if (substr($class,0,1)=='.')
-      $class = substr($class,1);
     try {
       return self::load($class,'static');
     } catch (\Exception $e) {
