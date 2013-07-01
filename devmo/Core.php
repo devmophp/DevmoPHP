@@ -551,11 +551,8 @@ abstract class Controller extends Loader {
 		$request = $controller===null
 				? Core::formatControllerToRequest($this->getPath())
 				: Core::formatControllerToRequest(Core::formatPath($controller,'controller',$this->getContext()));
-		if (count($get)>0) {
-			$request .= '?';
-			foreach ($get as $k=>$v)
-				$request .= '&'.urlencode($k).'='.urlencode($v);
-		}
+		if ($get)
+			$request .= '?'.http_build_query($get);
 		return $request;
 	}
 	protected function getRedirect ($url, $code = 302) {
