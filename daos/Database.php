@@ -200,13 +200,14 @@ class ResultSetDatabaseDao implements \Iterator, \Countable {
 		return $list;
 	}
 
-	function getHash () {
-		$hash = array();
+	function getMap () {
+		$map = array();
 		$this->rewind();
 		while ($x = $this->result->fetch_array())
-			$hash[$x[0]] = $x[1];
-		return $hash;
+			$map[$x[0]] = $x[1];
+		return $map;
 	}
+	function getHash () { return $this->getMap(); }
 
 	function getObject () {
 		return ($x = $this->result->fetch_object()) ? $this->dto ? new $this->dto($x) : $x : false;
@@ -215,9 +216,8 @@ class ResultSetDatabaseDao implements \Iterator, \Countable {
 	function getObjects () {
 		$objs = array();
 		$this->rewind();
-		while ($x = $this->getObject()) {
+		while ($x = $this->getObject())
 			$objs[] = $x;
-		}
 		return $objs;
 	}
 
@@ -226,7 +226,11 @@ class ResultSetDatabaseDao implements \Iterator, \Countable {
 	}
 
 	function getArray () {
-		return ($x = $this->result->fetch_array()) ? $this->dto ? new $this->dto($x) : $x : false;
+		if (($x = $this->result->fetch_array()))
+			foreach ($x as $k=>$v) 
+				if (is_int($k))
+					unset($x[$k]);
+		return $x ? $this->dto ? new $this->dto($x) : $x : false;
 	}
 
 }
