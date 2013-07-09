@@ -21,17 +21,10 @@ class Object {
 				$buffer = print_r($mixed,true);
 				Config::isCli() ? fgets(STDIN) : trigger_error("'{$option}' is only used in cli mode",E_USER_WARNING);
 				break;
-			case 'fatal':
-				$buffer = print_r($mixed,true);
-				exit;
-				break;
 			case 'trace':
 				foreach (debug_backtrace() as $i=>$x)
 					$buffer = "{$i} ".($x['function']?($x['object']?"{$x['object']}::":null)."{$x['function']}(".implode(',',$x['args']).") ":null)."{$x['file']}:{$x['line']}".PHP_EOL;
 				$buffer .= print_r($mixed,true);
-				break;
-			case 'obj':
-				$buffer = print_r($mixed,true);
 				break;
 			case 'xml':
 				$buffer = $mixed->asXML();
@@ -41,6 +34,8 @@ class Object {
 		if ($option=='return')
 			return $buffer;
 		print $buffer;
+		if ($option=='die' || $option=='exit')
+			exit;
 	}
 	public static function getValue ($needle, $haystack, $default=null) {
 		if ($haystack===null)
