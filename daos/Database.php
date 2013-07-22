@@ -43,6 +43,7 @@ class Database extends \devmo\Dao {
 	}
 
 	protected function useSchema ($name) {
+		$this->name = $name;
 		$this->getConnection()->select_db($name);
 	}
 
@@ -227,7 +228,7 @@ class ResultSetDatabaseDao implements \Iterator, \Countable {
 
 	function getArray () {
 		if (($x = $this->result->fetch_array()))
-			foreach ($x as $k=>$v) 
+			foreach ($x as $k=>$v)
 				if (is_int($k))
 					unset($x[$k]);
 		return $x ? $this->dto ? new $this->dto($x) : $x : false;
