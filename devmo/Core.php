@@ -22,8 +22,13 @@ class Object {
 				Config::isCli() ? fgets(STDIN) : trigger_error("'{$option}' is only used in cli mode",E_USER_WARNING);
 				break;
 			case 'trace':
-				foreach (debug_backtrace() as $i=>$x)
-					$buffer = "{$i} ".($x['function']?($x['object']?"{$x['object']}::":null)."{$x['function']}(".implode(',',$x['args']).") ":null)."{$x['file']}:{$x['line']}".PHP_EOL;
+				foreach (debug_backtrace() as $i=>$x) {
+					$args = null;
+					if (is_array(self::getValue('args',$x)))
+						foreach ($x['args'] as $xarg)
+							$args .= ($args ? "," : '').(is_array($xarg) ? 'array(..)' : $xarg);
+					$buffer .= "{$i} ".($x['function']?(isset($x['class'])?"{$x['class']}::":null)."{$x['function']}({$args}) ":null)."{$x['file']}:{$x['line']}".PHP_EOL;
+				}
 				$buffer .= print_r($mixed,true);
 				break;
 			case 'xml':
