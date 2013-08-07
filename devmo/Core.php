@@ -610,7 +610,7 @@ class View extends Object {
 	public function setTokens ($tokens) {
 		if (is_array($tokens) || is_object($tokens)) {
 			foreach ($tokens as $k=>$v) {
-				$this->set($k,$v);
+				$this->__set($k,$v);
 			}
 		}
 	}
