@@ -12,7 +12,6 @@ class Object {
 		return 'Object:\\'.get_class($this);
 	}
 	public static function debug ($mixed, $title=null, $option=null) {
-		$buffer = '';
 		switch ($option) {
 			default:
 				$buffer = print_r($mixed,true);
@@ -23,7 +22,7 @@ class Object {
 				break;
 			case 'trace':
 				foreach (debug_backtrace() as $i=>$x) {
-					$args = null;
+					$buffer = $args = '';
 					if (is_array(self::getValue('args',$x)))
 						foreach ($x['args'] as $xarg)
 							$args .= ($args ? "," : '').(is_array($xarg) ? 'array(..)' : $xarg);
@@ -34,6 +33,8 @@ class Object {
 			case 'xml':
 				$buffer = $mixed->asXML();
 				break;
+			case 'log':
+				return self::logError(print_r($mixed,true));
 		}
 		$buffer = (Config::isCli() ? null : '<pre>').PHP_EOL.$title.PHP_EOL.$buffer.(Config::isCli() ? ($option=='pause' ? null : PHP_EOL.PHP_EOL) : PHP_EOL.'</pre>'.PHP_EOL);
 		if ($option=='return')
@@ -57,10 +58,10 @@ class Object {
 	public static function classExists ($class) {
 		return class_exists($class, false) || interface_exists($class, false);
 	}
-	public static function logError ($e) {
+	public static function logError ($message) {
 		($logFile = Config::getErrorLog())
-			? error_log(date('Y-m-d H:i:s')."\t{$e}\n",3,$logFile)
-			: error_log(date('Y-m-d H:i:s')."\t{$e}\n",0);
+			? error_log(date('Y-m-d H:i:s')."\t{$message}\n",3,$logFile)
+			: error_log(date('Y-m-d H:i:s')."\t{$message}\n",0);
 	}
 }
 
